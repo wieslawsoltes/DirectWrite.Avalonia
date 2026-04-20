@@ -12,7 +12,7 @@ namespace Avalonia.Direct2D1
 {   
     internal abstract class SwapChainRenderTarget : IRenderTarget, ILayerFactory
     {
-        private const int BackBufferCount = 2;
+        private const int BackBufferCount = 1;
         private const uint DxgiErrorInvalidCall = 0x887A0001;
         private Size2 _savedSize;
         private Size2F _savedDpi;
@@ -119,9 +119,7 @@ namespace Avalonia.Direct2D1
                 },
                 Usage = Usage.RenderTargetOutput,
                 BufferCount = BackBufferCount,
-                Scaling = Scaling.Stretch,
-                SwapEffect = SwapEffect.FlipDiscard,
-                AlphaMode = Avalonia.Direct2D1.Interop.DXGI.AlphaMode.Ignore,
+                SwapEffect = SwapEffect.Discard,
             };
 
             using (var dxgiAdapter = Direct2D1Platform.DxgiDevice.Adapter)
@@ -135,7 +133,7 @@ namespace Avalonia.Direct2D1
         {
             _deviceContext = new DeviceContext(
                 Direct2D1Platform.Direct2D1Device,
-                DeviceContextOptions.EnableMultithreadedOptimizations)
+                DeviceContextOptions.None)
             {
                 DotsPerInch = _savedDpi
             };
