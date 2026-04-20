@@ -9,36 +9,15 @@
     <Avalonia_I_Want_To_Use_Private_Apis_In_Nuget_Package_And_Promise_To_Pin_The_Exact_Avalonia_Version_In_Package_Dependency>true</Avalonia_I_Want_To_Use_Private_Apis_In_Nuget_Package_And_Promise_To_Pin_The_Exact_Avalonia_Version_In_Package_Dependency>
     <PackageReleaseNotes>Initial standalone Direct2D1 backend package for Avalonia 12.0.1.</PackageReleaseNotes>
     <NoWarn>$(NoWarn);AVA3001</NoWarn>
-    <SharpDxVersion>4.0.1</SharpDxVersion>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeSharpDxAssembliesInPackage</TargetsForTfmSpecificBuildOutput>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <CsWin32RunAsBuildTask>true</CsWin32RunAsBuildTask>
+    <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Win32" />
-    <PackageDownload Include="SharpDX" Version="[$(SharpDxVersion)]" />
-    <PackageDownload Include="SharpDX.Direct2D1" Version="[$(SharpDxVersion)]" />
-    <PackageDownload Include="SharpDX.Direct3D11" Version="[$(SharpDxVersion)]" />
-    <PackageDownload Include="SharpDX.DXGI" Version="[$(SharpDxVersion)]" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="SharpDX">
-      <HintPath>$(NuGetPackageRoot)sharpdx/$(SharpDxVersion)/lib/netstandard1.1/SharpDX.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="SharpDX.Direct2D1">
-      <HintPath>$(NuGetPackageRoot)sharpdx.direct2d1/$(SharpDxVersion)/lib/netstandard1.1/SharpDX.Direct2D1.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="SharpDX.Direct3D11">
-      <HintPath>$(NuGetPackageRoot)sharpdx.direct3d11/$(SharpDxVersion)/lib/netstandard1.1/SharpDX.Direct3D11.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="SharpDX.DXGI">
-      <HintPath>$(NuGetPackageRoot)sharpdx.dxgi/$(SharpDxVersion)/lib/netstandard1.1/SharpDX.DXGI.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
+    <PackageReference Include="Microsoft.Windows.CsWin32" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,12 +25,4 @@
     <InternalsVisibleTo Include="Avalonia.Direct2D1.RenderTests" />
   </ItemGroup>
 
-  <Target Name="IncludeSharpDxAssembliesInPackage" DependsOnTargets="ResolveReferences">
-    <ItemGroup>
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)"
-                            Condition="'%(ReferenceCopyLocalPaths.Filename)' == 'SharpDX' or '%(ReferenceCopyLocalPaths.Filename)' == 'SharpDX.Direct2D1' or '%(ReferenceCopyLocalPaths.Filename)' == 'SharpDX.Direct3D11' or '%(ReferenceCopyLocalPaths.Filename)' == 'SharpDX.DXGI'">
-        <TargetPath>%(ReferenceCopyLocalPaths.Filename)%(ReferenceCopyLocalPaths.Extension)</TargetPath>
-      </BuildOutputInPackage>
-    </ItemGroup>
-  </Target>
 </Project>
