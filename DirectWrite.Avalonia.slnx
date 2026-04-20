@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/Avalonia.Direct2D1.RenderTests/Avalonia.Direct2D1.RenderTests.csproj" />
+    <Project Path="tests/Avalonia.Direct2D1.UnitTests/Avalonia.Direct2D1.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/ControlCatalog.Direct2D1/ControlCatalog.Direct2D1.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Avalonia.Direct2D1.Win32/Avalonia.Direct2D1.Win32.csproj" />
+    <Project Path="src/Avalonia.Direct2D1/Avalonia.Direct2D1.csproj" />
+  </Folder>
+</Solution>
