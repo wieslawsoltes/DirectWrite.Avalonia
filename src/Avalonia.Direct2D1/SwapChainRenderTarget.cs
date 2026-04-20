@@ -91,8 +91,10 @@ namespace Avalonia.Direct2D1
                     Quality = 0,
                 },
                 Usage = Usage.RenderTargetOutput,
-                BufferCount = 1,
-                SwapEffect = SwapEffect.Discard,
+                BufferCount = 2,
+                Scaling = Scaling.Stretch,
+                SwapEffect = SwapEffect.FlipDiscard,
+                AlphaMode = Avalonia.Direct2D1.Interop.DXGI.AlphaMode.Ignore,
             };
 
             using (var dxgiAdapter = Direct2D1Platform.DxgiDevice.Adapter)
@@ -104,7 +106,12 @@ namespace Avalonia.Direct2D1
 
         private void CreateDeviceContext()
         {
-            _deviceContext = new DeviceContext(Direct2D1Platform.Direct2D1Device, DeviceContextOptions.None) { DotsPerInch = _savedDpi };
+            _deviceContext = new DeviceContext(
+                Direct2D1Platform.Direct2D1Device,
+                DeviceContextOptions.EnableMultithreadedOptimizations)
+            {
+                DotsPerInch = _savedDpi
+            };
 
             if (_swapChain == null)
             {
