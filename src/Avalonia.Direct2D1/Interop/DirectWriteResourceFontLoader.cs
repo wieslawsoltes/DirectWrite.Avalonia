@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
+using Windows.Win32.Foundation;
 
 namespace Avalonia.Direct2D1.Interop;
 
-[ComVisible(true)]
-[ClassInterface(ClassInterfaceType.None)]
-internal sealed class DWriteResourceFontLoader : IDWriteFontCollectionLoader, IDWriteFontFileLoader, IDisposable
+[GeneratedComClass]
+internal sealed unsafe partial class DWriteResourceFontLoader : IDWriteFontCollectionLoader, IDWriteFontFileLoader, IDisposable
 {
     private readonly DWriteFactory _factory;
     private readonly List<byte[]> _fontData;
@@ -30,54 +31,48 @@ internal sealed class DWriteResourceFontLoader : IDWriteFontCollectionLoader, ID
             Buffer.BlockCopy(BitConverter.GetBytes(i), 0, CollectionKey, i * sizeof(int), sizeof(int));
         }
 
-        HResult.ThrowIfFailed(_factory.Native.RegisterFontFileLoader(this));
-        HResult.ThrowIfFailed(_factory.Native.RegisterFontCollectionLoader(this));
+        _factory.Native.RegisterFontFileLoader(this);
+        _factory.Native.RegisterFontCollectionLoader(this);
     }
 
     public byte[] CollectionKey { get; }
 
-    public int CreateEnumeratorFromKey(
+    public void CreateEnumeratorFromKey(
         IDWriteFactory factory,
-        IntPtr collectionKey,
+        void* collectionKey,
         uint collectionKeySize,
-        out IDWriteFontFileEnumerator? fontFileEnumerator)
+        out IDWriteFontFileEnumerator fontFileEnumerator)
     {
-        fontFileEnumerator = null;
-
-        if (collectionKey == IntPtr.Zero || collectionKeySize == 0 || collectionKeySize % sizeof(int) != 0)
+        if (collectionKey is null || collectionKeySize == 0 || collectionKeySize % sizeof(int) != 0)
         {
-            return HResult.E_INVALIDARG;
+            throw new ArgumentOutOfRangeException(nameof(collectionKeySize));
         }
 
         var key = new byte[collectionKeySize];
-        Marshal.Copy(collectionKey, key, 0, key.Length);
+        Marshal.Copy((IntPtr)collectionKey, key, 0, key.Length);
         fontFileEnumerator = new DWriteResourceFontFileEnumerator(factory, this, key);
-        return HResult.S_OK;
     }
 
-    public int CreateStreamFromKey(
-        IntPtr fontFileReferenceKey,
+    public void CreateStreamFromKey(
+        void* fontFileReferenceKey,
         uint fontFileReferenceKeySize,
-        out IDWriteFontFileStream? fontFileStream)
+        out IDWriteFontFileStream fontFileStream)
     {
-        fontFileStream = null;
-
-        if (fontFileReferenceKey == IntPtr.Zero || fontFileReferenceKeySize != sizeof(int))
+        if (fontFileReferenceKey is null || fontFileReferenceKeySize != sizeof(int))
         {
-            return HResult.E_INVALIDARG;
+            throw new ArgumentOutOfRangeException(nameof(fontFileReferenceKeySize));
         }
 
-        var index = Marshal.ReadInt32(fontFileReferenceKey);
+        var index = *(int*)fontFileReferenceKey;
 
         if ((uint)index >= (uint)_fontData.Count)
         {
-            return HResult.E_INVALIDARG;
+            throw new ArgumentOutOfRangeException(nameof(fontFileReferenceKey));
         }
 
         var stream = new DWriteResourceFontFileStream(_fontData[index]);
         _streams.Add(stream);
         fontFileStream = stream;
-        return HResult.S_OK;
     }
 
     public void Dispose()
@@ -100,9 +95,8 @@ internal sealed class DWriteResourceFontLoader : IDWriteFontCollectionLoader, ID
     }
 }
 
-[ComVisible(true)]
-[ClassInterface(ClassInterfaceType.None)]
-internal sealed class DWriteResourceFontFileEnumerator : IDWriteFontFileEnumerator
+[GeneratedComClass]
+internal sealed unsafe partial class DWriteResourceFontFileEnumerator : IDWriteFontFileEnumerator
 {
     private readonly IDWriteFactory _factory;
     private readonly IDWriteFontFileLoader _loader;
@@ -117,50 +111,40 @@ internal sealed class DWriteResourceFontFileEnumerator : IDWriteFontFileEnumerat
         Buffer.BlockCopy(collectionKey, 0, _fontIndices, 0, collectionKey.Length);
     }
 
-    public int MoveNext(out bool hasCurrentFile)
+    public void MoveNext(BOOL* hasCurrentFile)
     {
+        if (hasCurrentFile is null)
+        {
+            throw new ArgumentNullException(nameof(hasCurrentFile));
+        }
+
         if (_currentIndex + 1 < _fontIndices.Length)
         {
             _currentIndex++;
-            hasCurrentFile = true;
-            return HResult.S_OK;
+            *hasCurrentFile = true;
+            return;
         }
 
-        hasCurrentFile = false;
-        return HResult.S_OK;
+        *hasCurrentFile = false;
     }
 
-    public int GetCurrentFontFile(out IDWriteFontFile? fontFile)
+    public void GetCurrentFontFile(out IDWriteFontFile fontFile)
     {
-        fontFile = null;
-
         if ((uint)_currentIndex >= (uint)_fontIndices.Length)
         {
-            return HResult.E_FAIL;
+            throw new InvalidOperationException("The font file enumerator is not positioned on a valid font.");
         }
 
-        var index = _fontIndices[_currentIndex];
-        var key = BitConverter.GetBytes(index);
-        var handle = GCHandle.Alloc(key, GCHandleType.Pinned);
-
-        try
+        var key = BitConverter.GetBytes(_fontIndices[_currentIndex]);
+        fixed (byte* keyPtr = key)
         {
-            return _factory.CreateCustomFontFileReference(
-                handle.AddrOfPinnedObject(),
-                (uint)key.Length,
-                _loader,
-                out fontFile);
-        }
-        finally
-        {
-            handle.Free();
+            _factory.CreateCustomFontFileReference(keyPtr, (uint)key.Length, _loader, out fontFile);
         }
     }
 }
 
-[ComVisible(true)]
-[ClassInterface(ClassInterfaceType.None)]
-internal sealed class DWriteResourceFontFileStream : IDWriteFontFileStream, IDisposable
+[GeneratedComClass]
+internal sealed unsafe partial class DWriteResourceFontFileStream : IDWriteFontFileStream, IDisposable
 {
     private readonly byte[] _fontData;
     private readonly GCHandle _handle;
@@ -172,39 +156,44 @@ internal sealed class DWriteResourceFontFileStream : IDWriteFontFileStream, IDis
         _handle = GCHandle.Alloc(_fontData, GCHandleType.Pinned);
     }
 
-    public int ReadFileFragment(out IntPtr fragmentStart, ulong fileOffset, ulong fragmentSize, out IntPtr fragmentContext)
+    public void ReadFileFragment(void** fragmentStart, ulong fileOffset, ulong fragmentSize, void** fragmentContext)
     {
-        fragmentStart = IntPtr.Zero;
-        fragmentContext = IntPtr.Zero;
+        if (fragmentStart is null)
+        {
+            throw new ArgumentNullException(nameof(fragmentStart));
+        }
+
+        if (fragmentContext is null)
+        {
+            throw new ArgumentNullException(nameof(fragmentContext));
+        }
 
         if (fileOffset > (ulong)_fontData.LongLength || fragmentSize > (ulong)_fontData.LongLength - fileOffset)
         {
-            return HResult.E_INVALIDARG;
+            throw new ArgumentOutOfRangeException(nameof(fileOffset));
         }
 
         if (fileOffset > int.MaxValue)
         {
-            return HResult.E_INVALIDARG;
+            throw new ArgumentOutOfRangeException(nameof(fileOffset));
         }
 
-        fragmentStart = _handle.AddrOfPinnedObject() + (int)fileOffset;
-        return HResult.S_OK;
+        *fragmentStart = (byte*)_handle.AddrOfPinnedObject() + (int)fileOffset;
+        *fragmentContext = null;
     }
 
-    public void ReleaseFileFragment(IntPtr fragmentContext)
+    public void ReleaseFileFragment(void* fragmentContext)
     {
     }
 
-    public int GetFileSize(out ulong fileSize)
+    public void GetFileSize(out ulong fileSize)
     {
         fileSize = (ulong)_fontData.LongLength;
-        return HResult.S_OK;
     }
 
-    public int GetLastWriteTime(out ulong lastWriteTime)
+    public void GetLastWriteTime(out ulong lastWriteTime)
     {
         lastWriteTime = 0;
-        return HResult.S_OK;
     }
 
     public void Dispose()

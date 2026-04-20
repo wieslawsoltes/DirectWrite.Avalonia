@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 using Avalonia.Direct2D1.Interop;
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
 using Avalonia.Platform;
+using Windows.Win32;
 
 namespace Avalonia.Direct2D1.Media;
 
-internal class TextShaperImpl : ITextShaperImpl
+internal partial class TextShaperImpl : ITextShaperImpl
 {
     public ShapedBuffer ShapeText(ReadOnlyMemory<char> text, TextShaperOptions options)
     {
@@ -29,9 +31,9 @@ internal class TextShaperImpl : ITextShaperImpl
         var analysisSink = new TextAnalysisSinkImpl(textString.Length, options.BidiLevel);
         var analyzer = Direct2D1Platform.DirectWriteTextAnalyzer.Native;
 
-        HResult.ThrowIfFailed(analyzer.AnalyzeScript(analysisSource, 0, (uint)textString.Length, analysisSink));
-        HResult.ThrowIfFailed(analyzer.AnalyzeBidi(analysisSource, 0, (uint)textString.Length, analysisSink));
-        HResult.ThrowIfFailed(analyzer.AnalyzeNumberSubstitution(analysisSource, 0, (uint)textString.Length, analysisSink));
+        analyzer.AnalyzeScript(analysisSource, 0, (uint)textString.Length, analysisSink);
+        analyzer.AnalyzeBidi(analysisSource, 0, (uint)textString.Length, analysisSink);
+        analyzer.AnalyzeNumberSubstitution(analysisSource, 0, (uint)textString.Length, analysisSink);
 
         var runShapes = new List<RunShapeResult>();
         var totalGlyphCount = 0;
@@ -89,7 +91,7 @@ internal class TextShaperImpl : ITextShaperImpl
         return shapedBuffer;
     }
 
-    private static RunShapeResult ShapeRun(
+    private static unsafe RunShapeResult ShapeRun(
         IDWriteTextAnalyzer analyzer,
         GlyphTypefaceImpl typeface,
         string text,
@@ -109,65 +111,59 @@ internal class TextShaperImpl : ITextShaperImpl
 
             var scriptAnalysis = run.ScriptAnalysis;
 
-            var hr = analyzer.GetGlyphs(
-                runText,
-                (uint)run.Length,
-                typeface.FontFace.Native,
-                isSideways: false,
-                isRightToLeft: run.IsRightToLeft,
-                ref scriptAnalysis,
-                culture.Name,
-                run.NumberSubstitution,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                0,
-                (uint)maxGlyphCount,
-                clusterMap,
-                textProps,
-                glyphIndices,
-                glyphProps,
-                out var actualGlyphCount);
+            try
+            {
+                analyzer.GetGlyphs(
+                    runText,
+                    typeface.FontFace.Native,
+                    false,
+                    run.IsRightToLeft,
+                    in scriptAnalysis,
+                    culture.Name,
+                    run.NumberSubstitution!,
+                    null,
+                    ReadOnlySpan<uint>.Empty,
+                    clusterMap,
+                    textProps,
+                    glyphIndices,
+                    glyphProps,
+                    out var actualGlyphCount);
 
-            if (hr == HResult.ERROR_INSUFFICIENT_BUFFER && maxGlyphCount < run.Length * 8 + 32)
+                Array.Resize(ref glyphIndices, (int)actualGlyphCount);
+                Array.Resize(ref glyphProps, (int)actualGlyphCount);
+
+                var glyphAdvances = new float[actualGlyphCount];
+                var glyphOffsets = new DWRITE_GLYPH_OFFSET[actualGlyphCount];
+
+                analyzer.GetGlyphPlacements(
+                    runText,
+                    clusterMap,
+                    textProps,
+                    glyphIndices,
+                    glyphProps,
+                    typeface.FontFace.Native,
+                    (float)options.FontRenderingEmSize,
+                    false,
+                    run.IsRightToLeft,
+                    in scriptAnalysis,
+                    culture.Name,
+                    null,
+                    ReadOnlySpan<uint>.Empty,
+                    glyphAdvances,
+                    glyphOffsets);
+
+                return new RunShapeResult(
+                    (int)actualGlyphCount,
+                    glyphIndices,
+                    glyphAdvances,
+                    glyphOffsets,
+                    BuildGlyphClusters(clusterMap, (int)actualGlyphCount, run.Start));
+            }
+            catch (COMException ex) when (ex.HResult == DirectWriteErrorCodes.ErrorInsufficientBuffer
+                                          && maxGlyphCount < run.Length * 8 + 32)
             {
                 maxGlyphCount *= 2;
-                continue;
             }
-
-            HResult.ThrowIfFailed(hr);
-
-            Array.Resize(ref glyphIndices, (int)actualGlyphCount);
-            Array.Resize(ref glyphProps, (int)actualGlyphCount);
-
-            var glyphAdvances = new float[actualGlyphCount];
-            var glyphOffsets = new DWRITE_GLYPH_OFFSET[actualGlyphCount];
-
-            HResult.ThrowIfFailed(analyzer.GetGlyphPlacements(
-                runText,
-                clusterMap,
-                textProps,
-                (uint)run.Length,
-                glyphIndices,
-                glyphProps,
-                actualGlyphCount,
-                typeface.FontFace.Native,
-                (float)options.FontRenderingEmSize,
-                isSideways: false,
-                isRightToLeft: run.IsRightToLeft,
-                ref scriptAnalysis,
-                culture.Name,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                0,
-                glyphAdvances,
-                glyphOffsets));
-
-            return new RunShapeResult(
-                (int)actualGlyphCount,
-                glyphIndices,
-                glyphAdvances,
-                glyphOffsets,
-                BuildGlyphClusters(clusterMap, (int)actualGlyphCount, run.Start));
         }
     }
 
@@ -213,9 +209,8 @@ internal class TextShaperImpl : ITextShaperImpl
             ?? throw new NotSupportedException("The provided GlyphTypeface is not supported by this text shaper.");
     }
 
-    [ComVisible(true)]
-    [ClassInterface(ClassInterfaceType.None)]
-    private sealed class TextAnalysisSourceImpl : IDWriteTextAnalysisSource, IDisposable
+    [GeneratedComClass]
+    private sealed unsafe partial class TextAnalysisSourceImpl : IDWriteTextAnalysisSource, IDisposable
     {
         private readonly string _text;
         private readonly GCHandle _textHandle;
@@ -228,58 +223,53 @@ internal class TextShaperImpl : ITextShaperImpl
             var locale = culture.Name.Length == 0 ? CultureInfo.InvariantCulture.Name : culture.Name;
             _localeHandle = GCHandle.Alloc(locale, GCHandleType.Pinned);
             ReadingDirection = (bidiLevel & 1) == 0
-                ? DWRITE_READING_DIRECTION.LEFT_TO_RIGHT
-                : DWRITE_READING_DIRECTION.RIGHT_TO_LEFT;
+                ? DWRITE_READING_DIRECTION.DWRITE_READING_DIRECTION_LEFT_TO_RIGHT
+                : DWRITE_READING_DIRECTION.DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
         }
 
         public DWRITE_READING_DIRECTION ReadingDirection { get; }
 
-        public int GetTextAtPosition(uint textPosition, out IntPtr textString, out uint textLength)
+        public void GetTextAtPosition(uint textPosition, ushort** textString, out uint textLength)
         {
             if (textPosition >= _text.Length)
             {
-                textString = IntPtr.Zero;
+                *textString = null;
                 textLength = 0;
-                return HResult.S_OK;
+                return;
             }
 
-            textString = _textHandle.AddrOfPinnedObject() + (int)textPosition * sizeof(char);
+            *textString = (ushort*)((byte*)_textHandle.AddrOfPinnedObject() + (int)textPosition * sizeof(char));
             textLength = (uint)(_text.Length - (int)textPosition);
-            return HResult.S_OK;
         }
 
-        public int GetTextBeforePosition(uint textPosition, out IntPtr textString, out uint textLength)
+        public void GetTextBeforePosition(uint textPosition, ushort** textString, out uint textLength)
         {
             if (textPosition == 0)
             {
-                textString = IntPtr.Zero;
+                *textString = null;
                 textLength = 0;
-                return HResult.S_OK;
+                return;
             }
 
-            textString = _textHandle.AddrOfPinnedObject();
+            *textString = (ushort*)_textHandle.AddrOfPinnedObject();
             textLength = Math.Min(textPosition, (uint)_text.Length);
-            return HResult.S_OK;
         }
 
-        public int GetParagraphReadingDirection(out DWRITE_READING_DIRECTION readingDirection)
+        public DWRITE_READING_DIRECTION GetParagraphReadingDirection()
         {
-            readingDirection = ReadingDirection;
-            return HResult.S_OK;
+            return ReadingDirection;
         }
 
-        public int GetLocaleName(uint textPosition, out uint textLength, out IntPtr localeName)
+        public void GetLocaleName(uint textPosition, out uint textLength, ushort** localeName)
         {
-            localeName = _localeHandle.AddrOfPinnedObject();
+            *localeName = (ushort*)_localeHandle.AddrOfPinnedObject();
             textLength = textPosition >= _text.Length ? 0 : (uint)(_text.Length - (int)textPosition);
-            return HResult.S_OK;
         }
 
-        public int GetNumberSubstitution(uint textPosition, out uint textLength, out IDWriteNumberSubstitution? numberSubstitution)
+        public void GetNumberSubstitution(uint textPosition, out uint textLength, out IDWriteNumberSubstitution numberSubstitution)
         {
             textLength = textPosition >= _text.Length ? 0 : (uint)(_text.Length - (int)textPosition);
-            numberSubstitution = null;
-            return HResult.S_OK;
+            numberSubstitution = null!;
         }
 
         public void Dispose()
@@ -296,9 +286,8 @@ internal class TextShaperImpl : ITextShaperImpl
         }
     }
 
-    [ComVisible(true)]
-    [ClassInterface(ClassInterfaceType.None)]
-    private sealed class TextAnalysisSinkImpl : IDWriteTextAnalysisSink
+    [GeneratedComClass]
+    private sealed unsafe partial class TextAnalysisSinkImpl : IDWriteTextAnalysisSink
     {
         private readonly DWRITE_SCRIPT_ANALYSIS[] _scripts;
         private readonly byte[] _bidiLevels;
@@ -318,39 +307,32 @@ internal class TextShaperImpl : ITextShaperImpl
             }
         }
 
-        public int SetScriptAnalysis(uint textPosition, uint textLength, ref DWRITE_SCRIPT_ANALYSIS scriptAnalysis)
+        public void SetScriptAnalysis(uint textPosition, uint textLength, DWRITE_SCRIPT_ANALYSIS* scriptAnalysis)
         {
             for (var i = (int)textPosition; i < textPosition + textLength && i < _scripts.Length; i++)
             {
-                _scripts[i] = scriptAnalysis;
+                _scripts[i] = *scriptAnalysis;
             }
-
-            return HResult.S_OK;
         }
 
-        public int SetLineBreakpoints(uint textPosition, uint textLength, IntPtr lineBreakpoints)
+        public void SetLineBreakpoints(uint textPosition, uint textLength, Windows.Win32.Graphics.DirectWrite.DWRITE_LINE_BREAKPOINT* lineBreakpoints)
         {
-            return HResult.S_OK;
         }
 
-        public int SetBidiLevel(uint textPosition, uint textLength, byte explicitLevel, byte resolvedLevel)
+        public void SetBidiLevel(uint textPosition, uint textLength, byte explicitLevel, byte resolvedLevel)
         {
             for (var i = (int)textPosition; i < textPosition + textLength && i < _bidiLevels.Length; i++)
             {
                 _bidiLevels[i] = resolvedLevel;
             }
-
-            return HResult.S_OK;
         }
 
-        public int SetNumberSubstitution(uint textPosition, uint textLength, IDWriteNumberSubstitution? numberSubstitution)
+        public void SetNumberSubstitution(uint textPosition, uint textLength, IDWriteNumberSubstitution numberSubstitution)
         {
             for (var i = (int)textPosition; i < textPosition + textLength && i < _numberSubstitutions.Length; i++)
             {
                 _numberSubstitutions[i] = numberSubstitution;
             }
-
-            return HResult.S_OK;
         }
 
         public IReadOnlyList<TextAnalysisRun> GetRuns()
