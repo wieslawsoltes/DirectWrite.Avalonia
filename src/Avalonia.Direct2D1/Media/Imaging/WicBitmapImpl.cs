@@ -4,7 +4,7 @@ using Avalonia.Direct2D1.Interop;
 using Avalonia.Direct2D1.Interop.WIC;
 using APixelFormat = Avalonia.Platform.PixelFormat;
 using AlphaFormat = Avalonia.Platform.AlphaFormat;
-using D2DBitmap = Avalonia.Direct2D1.Interop.Direct2D1.Bitmap1;
+using D2DBitmap = Avalonia.Direct2D1.Interop.Direct2D1.Bitmap;
 using Avalonia.Platform;
 using PixelFormat = Avalonia.Direct2D1.Interop.WIC.PixelFormat;
 
@@ -225,7 +225,7 @@ namespace Avalonia.Direct2D1.Media
             using var converter = new FormatConverter(Direct2D1Platform.ImagingFactory);
             converter.Initialize(WicImpl, Avalonia.Direct2D1.Interop.WIC.PixelFormat.Format32bppPBGRA);
 
-            var d2dBitmap = D2DBitmap.FromWicBitmap(renderTarget, converter).QueryInterface<D2DBitmap>();
+            var d2dBitmap = Avalonia.Direct2D1.Interop.Direct2D1.Bitmap1.FromWicBitmap(renderTarget, converter);
 
             return new OptionalDispose<D2DBitmap>(d2dBitmap, true);
         }

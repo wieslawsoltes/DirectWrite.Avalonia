@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using Avalonia.Platform;
-using D2DBitmap = Avalonia.Direct2D1.Interop.Direct2D1.Bitmap1;
+using D2DBitmap = Avalonia.Direct2D1.Interop.Direct2D1.Bitmap;
 
 namespace Avalonia.Direct2D1.Media
 {

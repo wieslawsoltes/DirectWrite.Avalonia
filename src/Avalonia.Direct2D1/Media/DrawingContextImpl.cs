@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
-using System.Reflection;
 using Avalonia.Direct2D1.Interop;
 using Avalonia.Direct2D1.Interop.Direct2D1;
 using Avalonia.Direct2D1.Interop.Mathematics;
@@ -677,7 +676,7 @@ namespace Avalonia.Direct2D1.Media
                             return new ImageBrushImpl(
                                 sceneBrushContent.Brush,
                                 _deviceContext,
-                                new D2DBitmapImpl(intermediate.Bitmap.QueryInterface<Bitmap1>()),
+                                new D2DBitmapImpl(intermediate.Bitmap),
                                 destinationRect);
                         }
 
@@ -757,17 +756,6 @@ namespace Avalonia.Direct2D1.Media
 
         private static BitmapImpl GetBitmapImpl(Avalonia.Media.Imaging.Bitmap bitmap)
         {
-            var platformImplProperty = bitmap.GetType().GetProperty("PlatformImpl",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            var platformRef = platformImplProperty?.GetValue(bitmap);
-            var itemProperty = platformRef?.GetType().GetProperty("Item",
-                BindingFlags.Instance | BindingFlags.Public);
-
-            if (itemProperty?.GetValue(platformRef) is BitmapImpl bitmapImpl)
-            {
-                return bitmapImpl;
-            }
-
             using var stream = new MemoryStream();
             bitmap.Save(stream);
             stream.Position = 0;

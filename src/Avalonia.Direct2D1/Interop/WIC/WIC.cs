@@ -394,6 +394,8 @@ public sealed class BitmapFrameEncode : IDisposable
         _native.Initialize(null!);
     }
 
+    internal W32WIC.IWICBitmapFrameEncode Native => _native;
+
     public unsafe void WriteSource(BitmapSource source)
     {
         _native.WriteSource(source.Native, default(W32WIC.WICRect*));

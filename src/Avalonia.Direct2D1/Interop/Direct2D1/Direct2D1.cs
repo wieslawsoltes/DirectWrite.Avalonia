@@ -794,7 +794,7 @@ public sealed class Bitmap1 : Bitmap
 
     internal W32D2D.ID2D1Bitmap1 NativeBitmap => GetNative<W32D2D.ID2D1Bitmap1>();
 
-    public static Bitmap1 FromWicBitmap(RenderTarget renderTarget, Avalonia.Direct2D1.Interop.WIC.BitmapSource bitmapSource)
+    public static Bitmap FromWicBitmap(RenderTarget renderTarget, Avalonia.Direct2D1.Interop.WIC.BitmapSource bitmapSource)
     {
         if (renderTarget is DeviceContext deviceContext)
         {
@@ -803,7 +803,7 @@ public sealed class Bitmap1 : Bitmap
         }
 
         renderTarget.Native.CreateBitmapFromWicBitmap(bitmapSource.Native, default(W32D2D.D2D1_BITMAP_PROPERTIES?), out var bitmap0);
-        return new Bitmap(bitmap0).QueryInterface<Bitmap1>();
+        return new Bitmap(bitmap0);
     }
 
     private static W32D2D.ID2D1Bitmap1 Create(DeviceContext deviceContext, Avalonia.Direct2D1.Interop.DXGI.Surface surface, BitmapProperties1 properties)

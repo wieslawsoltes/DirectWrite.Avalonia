@@ -5,7 +5,7 @@ using Avalonia.Rendering;
 using Avalonia.Utilities;
 using Avalonia.Direct2D1.Interop;
 using Avalonia.Direct2D1.Interop.Direct2D1;
-using D2DBitmap = Avalonia.Direct2D1.Interop.Direct2D1.Bitmap1;
+using D2DBitmap = Avalonia.Direct2D1.Interop.Direct2D1.Bitmap;
 
 namespace Avalonia.Direct2D1.Media.Imaging
 {
@@ -14,7 +14,7 @@ namespace Avalonia.Direct2D1.Media.Imaging
         private readonly BitmapRenderTarget _renderTarget;
 
         public D2DRenderTargetBitmapImpl(BitmapRenderTarget renderTarget)
-            : base(renderTarget.Bitmap.QueryInterface<Bitmap1>())
+            : base(renderTarget.Bitmap)
         {
             _renderTarget = renderTarget;
         }
@@ -54,12 +54,8 @@ namespace Avalonia.Direct2D1.Media.Imaging
 
         public override void Dispose()
         {
+            base.Dispose();
             _renderTarget.Dispose();
-        }
-
-        public override OptionalDispose<D2DBitmap> GetDirect2DBitmap(Avalonia.Direct2D1.Interop.Direct2D1.RenderTarget target)
-        {
-            return new OptionalDispose<D2DBitmap>(_renderTarget.Bitmap.QueryInterface<Bitmap1>(), false);
         }
 
         public override void Save(Stream stream, int? quality = null)

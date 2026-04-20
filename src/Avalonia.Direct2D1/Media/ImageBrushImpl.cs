@@ -6,7 +6,7 @@ namespace Avalonia.Direct2D1.Media
 {
     internal sealed class ImageBrushImpl : BrushImpl
     {
-        private readonly OptionalDispose<Bitmap1> _bitmap;
+        private readonly OptionalDispose<Bitmap> _bitmap;
 
         public ImageBrushImpl(
             ITileBrush brush,
