@@ -16,7 +16,6 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Win32" />
-    <PackageReference Include="HarfBuzzSharp" />
     <PackageDownload Include="SharpDX" Version="[$(SharpDxVersion)]" />
     <PackageDownload Include="SharpDX.Direct2D1" Version="[$(SharpDxVersion)]" />
     <PackageDownload Include="SharpDX.Direct3D11" Version="[$(SharpDxVersion)]" />

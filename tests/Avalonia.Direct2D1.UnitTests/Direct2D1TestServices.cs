@@ -16,7 +16,6 @@ internal static class Direct2D1TestServices
 
         AppBuilder.Configure<Application>()
             .UseStandardRuntimePlatformSubsystem()
-            .UseTextShapingSubsystem(() => { }, "Test")
             .UseDirect2D1()
             .UseWindowingSubsystem(() => { }, "Test")
             .SetupWithoutStarting();

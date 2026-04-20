@@ -23,7 +23,9 @@ namespace Avalonia
                 builder.With(options);
             }
 
-            builder.UseRenderingSubsystem(Direct2D1.Direct2D1Platform.Initialize, "Direct2D1");
+            builder
+                .UseTextShapingSubsystem(Direct2D1.Direct2D1Platform.InitializeTextShaping, "DirectWrite")
+                .UseRenderingSubsystem(Direct2D1.Direct2D1Platform.Initialize, "Direct2D1");
             return builder;
         }
     }
@@ -43,6 +45,8 @@ namespace Avalonia.Direct2D1
         public static SharpDX.Direct2D1.Device Direct2D1Device { get; private set; } = null!;
 
         public static SharpDX.DirectWrite.Factory1 DirectWriteFactory { get; private set; } = null!;
+
+        public static SharpDX.DirectWrite.TextAnalyzer DirectWriteTextAnalyzer { get; private set; } = null!;
 
         public static SharpDX.WIC.ImagingFactory ImagingFactory { get; private set; } = null!;
 
@@ -164,6 +168,8 @@ namespace Avalonia.Direct2D1
                     DirectWriteFactory = factory.QueryInterface<SharpDX.DirectWrite.Factory1>();
                 }
 
+                DirectWriteTextAnalyzer = new SharpDX.DirectWrite.TextAnalyzer(DirectWriteFactory);
+
                 ImagingFactory = new SharpDX.WIC.ImagingFactory();
 
                 var featureLevels = new[]
@@ -187,14 +193,20 @@ namespace Avalonia.Direct2D1
             }
         }
 
-        public static void Initialize()
+        public static void InitializeTextShaping()
         {
             InitializeDirect2D();
             AvaloniaLocator.CurrentMutable
-                .Bind<IPlatformRenderInterface>().ToConstant(s_instance)
                 .Bind<IFontManagerImpl>().ToConstant(new FontManagerImpl())
                 .Bind<ITextShaperImpl>().ToConstant(new TextShaperImpl());
             SharpDX.Configuration.EnableReleaseOnFinalizer = true;
+        }
+
+        public static void Initialize()
+        {
+            InitializeTextShaping();
+            AvaloniaLocator.CurrentMutable
+                .Bind<IPlatformRenderInterface>().ToConstant(s_instance);
         }
 
         private IRenderTarget CreateRenderTarget(IEnumerable<IPlatformRenderSurface> surfaces)
