@@ -21,15 +21,25 @@ internal class FontManagerImpl : IFontManagerImpl
 
     public string[] GetInstalledFontFamilyNames(bool checkForUpdates = false)
     {
-        var familyCount = Direct2D1FontCollectionCache.InstalledFontCollection.FontFamilyCount;
+        DWriteFontCollection? dynamicCollection = null;
+        var fontCollection = Direct2D1FontCollectionCache.InstalledFontCollection;
+
+        if (checkForUpdates)
+        {
+            dynamicCollection = Direct2D1Platform.DirectWriteFactory.GetSystemFontCollection(checkForUpdates: true);
+            fontCollection = dynamicCollection;
+        }
+
+        var familyCount = fontCollection.FontFamilyCount;
         var fontFamilies = new string[(int)familyCount];
 
         for (uint i = 0; i < familyCount; i++)
         {
-            using var family = Direct2D1FontCollectionCache.InstalledFontCollection.GetFontFamily(i);
+            using var family = fontCollection.GetFontFamily(i);
             fontFamilies[(int)i] = family.FamilyName;
         }
 
+        dynamicCollection?.Dispose();
         return fontFamilies;
     }
 
