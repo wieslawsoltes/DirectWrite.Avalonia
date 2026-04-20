@@ -13,6 +13,7 @@ namespace Avalonia.Direct2D1
         private Size2 _savedSize;
         private Size2F _savedDpi;
         private DeviceContext? _deviceContext;
+        private Bitmap1? _targetBitmap;
         private SwapChain1? _swapChain;
 
         /// <summary>
@@ -63,15 +64,14 @@ namespace Avalonia.Direct2D1
 
         public void Dispose()
         {
-            _deviceContext?.Dispose();
-
+            DisposeDeviceContext();
             _swapChain?.Dispose();
+            _swapChain = null;
         }
 
         private void Resize()
         {
-            _deviceContext?.Dispose();
-            _deviceContext = null;
+            DisposeDeviceContext();
 
             _swapChain?.ResizeBuffers(0, 0, 0, Format.Unknown, SwapChainFlags.None);
 
@@ -112,7 +112,8 @@ namespace Avalonia.Direct2D1
             }
 
             using (var dxgiBackBuffer = _swapChain!.GetBackBuffer<Surface>(0))
-            using (var d2dBackBuffer = new Bitmap1(
+            {
+                _targetBitmap = new Bitmap1(
                 _deviceContext,
                 dxgiBackBuffer,
                 new BitmapProperties1(
@@ -123,10 +124,24 @@ namespace Avalonia.Direct2D1
                     },
                     _savedSize.Width,
                     _savedSize.Height,
-                    BitmapOptions.Target | BitmapOptions.CannotDraw)))
-            {
-                _deviceContext.Target = d2dBackBuffer;
+                    BitmapOptions.Target | BitmapOptions.CannotDraw));
+
+                _deviceContext.Target = _targetBitmap;
             }
+        }
+
+        private void DisposeDeviceContext()
+        {
+            if (_deviceContext is not null)
+            {
+                _deviceContext.Native.SetTarget(null!);
+            }
+
+            _targetBitmap?.Dispose();
+            _targetBitmap = null;
+
+            _deviceContext?.Dispose();
+            _deviceContext = null;
         }
 
         protected abstract SwapChain1 CreateSwapChain(Avalonia.Direct2D1.Interop.DXGI.Factory2 dxgiFactory, SwapChainDescription1 swapChainDesc);
