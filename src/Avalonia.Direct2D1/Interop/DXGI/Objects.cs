@@ -89,9 +89,9 @@ public sealed class SwapChain1 : DxgiObject
 
     internal W32DXGI.IDXGISwapChain1 Native => GetNative<W32DXGI.IDXGISwapChain1>();
 
-    public unsafe void Present(int syncInterval, PresentFlags flags)
+    public void Present(int syncInterval, PresentFlags flags)
     {
-        Native.Present1((uint)syncInterval, flags.ToWin32(), default(W32DXGI.DXGI_PRESENT_PARAMETERS*)).ThrowOnFailure();
+        Native.Present((uint)syncInterval, flags.ToWin32()).ThrowOnFailure();
     }
 
     public void ResizeBuffers(int bufferCount, int width, int height, Format format, SwapChainFlags flags)
