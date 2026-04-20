@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Direct2D1.Avalonia.Win32</PackageId>
+    <Title>Direct2D1.Avalonia.Win32</Title>
+    <Description>Win32 bootstrap helpers for the Direct2D1.Avalonia renderer.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Avalonia.Direct2D1\Avalonia.Direct2D1.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Win32" />
+  </ItemGroup>
+</Project>
