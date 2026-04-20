@@ -1,5 +1,4 @@
 ﻿using Avalonia;
-using Avalonia.Direct2D1;
 using Avalonia.Media;
 using Xunit;
 
@@ -15,7 +14,7 @@ namespace Avalonia.Direct2D1.UnitTests.Media
                 return;
             }
 
-            Direct2D1Platform.Initialize();
+            Direct2D1TestServices.Initialize();
 
             var typeface = new Typeface(new FontFamily("A, B, Arial"));
             var glyphTypeface = typeface.GlyphTypeface;
@@ -31,7 +30,7 @@ namespace Avalonia.Direct2D1.UnitTests.Media
                 return;
             }
 
-            Direct2D1Platform.Initialize();
+            Direct2D1TestServices.Initialize();
 
             var typeface = new Typeface(new FontFamily("A, B, Arial"), weight: FontWeight.Bold);
             var glyphTypeface = typeface.GlyphTypeface;
@@ -49,7 +48,7 @@ namespace Avalonia.Direct2D1.UnitTests.Media
                 return;
             }
 
-            Direct2D1Platform.Initialize();
+            Direct2D1TestServices.Initialize();
 
             var glyphTypeface = new Typeface(new FontFamily("Unknown")).GlyphTypeface;
             var defaultName = FontManager.Current.DefaultFontFamily.Name;

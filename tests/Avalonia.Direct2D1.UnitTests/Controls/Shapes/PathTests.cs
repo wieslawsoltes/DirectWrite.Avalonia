@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls.Shapes;
-using Avalonia.Direct2D1;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Xunit;
@@ -20,7 +19,7 @@ namespace Avalonia.Direct2D1.UnitTests.Controls.Shapes
                 return;
             }
 
-            Direct2D1Platform.Initialize();
+            Direct2D1TestServices.Initialize();
 
             var target = new ShapePath
             {
@@ -45,7 +44,7 @@ namespace Avalonia.Direct2D1.UnitTests.Controls.Shapes
                 return;
             }
 
-            Direct2D1Platform.Initialize();
+            Direct2D1TestServices.Initialize();
 
             var target = new ShapePath
             {

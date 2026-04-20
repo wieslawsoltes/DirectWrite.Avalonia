@@ -1,5 +1,4 @@
 using Avalonia;
-using Avalonia.Direct2D1;
 using Avalonia.Media;
 using Xunit;
 
@@ -17,7 +16,7 @@ namespace Avalonia.Direct2D1.UnitTests.Media
                 return;
             }
 
-            Direct2D1Platform.Initialize();
+            Direct2D1TestServices.Initialize();
 
             var target = StreamGeometry.Parse("M 0 2 L 4 6 L 0 10 Z");
 
@@ -32,7 +31,7 @@ namespace Avalonia.Direct2D1.UnitTests.Media
                 return;
             }
 
-            Direct2D1Platform.Initialize();
+            Direct2D1TestServices.Initialize();
 
             var target = StreamGeometry.Parse("M 0 2 L 4 6 L 0 10 Z");
             var pen = new Pen(Brushes.Black, 2);
