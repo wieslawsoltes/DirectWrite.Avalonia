@@ -445,14 +445,10 @@ namespace Avalonia.Direct2D1.Media
                         bidiLevel = 0
                     };
 
-                    _renderTarget.DrawGlyphRun(
-                        new RawVector2
-                        {
-                            X = (float)glyphRun.BaselineOrigin.X,
-                            Y = (float)glyphRun.BaselineOrigin.Y
-                        },
+                    _deviceContext.Native.DrawGlyphRun(
+                        glyphRun.BaselineOrigin.ToInterop().ToWin32(),
                         in nativeGlyphRun,
-                        brush.PlatformBrush,
+                        brush.PlatformBrush.Native,
                         DWRITE_MEASURING_MODE.DWRITE_MEASURING_MODE_NATURAL);
                 }
             }
@@ -521,6 +517,7 @@ namespace Avalonia.Direct2D1.Media
         readonly Stack<Layer?> _layers = new Stack<Layer?>();
         private readonly Stack<Layer> _layerPool = new Stack<Layer>();
         private RenderOptions _renderOptions;
+        private TextOptions _textOptions;
         private readonly Matrix? _postTransform;
         private Matrix _transform = Matrix.Identity;
 
@@ -742,7 +739,8 @@ namespace Avalonia.Direct2D1.Media
 
         public void PushTextOptions(TextOptions textOptions)
         {
-            _textOptionsStack.Push(textOptions);
+            _textOptionsStack.Push(_textOptions);
+            _textOptions = _textOptions.MergeWith(textOptions);
             ApplyRenderOptions(_renderOptions);
         }
 
@@ -750,7 +748,11 @@ namespace Avalonia.Direct2D1.Media
         {
             if (_textOptionsStack.Count != 0)
             {
-                _textOptionsStack.Pop();
+                _textOptions = _textOptionsStack.Pop();
+            }
+            else
+            {
+                _textOptions = default;
             }
 
             ApplyRenderOptions(_renderOptions);
@@ -769,33 +771,40 @@ namespace Avalonia.Direct2D1.Media
         private void ApplyRenderOptions(RenderOptions renderOptions)
         {
             var enableTextAntialiasing = Direct2D1Platform.Options.EnableTextAntialiasing;
-            var textRenderingMode = _textOptionsStack.Count != 0
-                ? _textOptionsStack.Peek().TextRenderingMode
+            var effectiveTextOptions = _textOptions;
+
 #pragma warning disable CS0618
-                : renderOptions.TextRenderingMode;
+            if (effectiveTextOptions.TextRenderingMode == TextRenderingMode.Unspecified &&
+                renderOptions.TextRenderingMode != TextRenderingMode.Unspecified)
+            {
+                effectiveTextOptions = effectiveTextOptions with
+                {
+                    TextRenderingMode = renderOptions.TextRenderingMode
+                };
+            }
 #pragma warning restore CS0618
+
+            var textRenderingMode = effectiveTextOptions.TextRenderingMode;
+
+            if (textRenderingMode == TextRenderingMode.Unspecified)
+            {
+                textRenderingMode = renderOptions.EdgeMode == EdgeMode.Aliased
+                    ? TextRenderingMode.Alias
+                    : TextRenderingMode.Antialias;
+            }
 
             _deviceContext.AntialiasMode = renderOptions.EdgeMode != EdgeMode.Aliased ? AntialiasMode.PerPrimitive : AntialiasMode.Aliased;
             switch (textRenderingMode)
             {
-                case TextRenderingMode.Unspecified:
-                    // This backend renders text onto alpha-backed DXGI/WIC targets, where grayscale is the
-                    // safe default and avoids ClearType disappearing on composition surfaces.
-                    _deviceContext.TextAntialiasMode = enableTextAntialiasing && renderOptions.EdgeMode != EdgeMode.Aliased
-                        ? TextAntialiasMode.Grayscale
-                        : TextAntialiasMode.Aliased;
-                    break;
                 case TextRenderingMode.Alias:
                     _deviceContext.TextAntialiasMode = TextAntialiasMode.Aliased;
                     break;
                 case TextRenderingMode.Antialias:
+                case TextRenderingMode.SubpixelAntialias:
+                    // This backend draws text through a mix of alpha-backed DXGI/WIC surfaces and intermediate
+                    // layers, where ClearType is not robust. Treat subpixel requests as grayscale antialiasing.
                     _deviceContext.TextAntialiasMode = enableTextAntialiasing
                         ? TextAntialiasMode.Grayscale
-                        : TextAntialiasMode.Aliased;
-                    break;
-                case TextRenderingMode.SubpixelAntialias:
-                    _deviceContext.TextAntialiasMode = enableTextAntialiasing
-                        ? TextAntialiasMode.Cleartype
                         : TextAntialiasMode.Aliased;
                     break;
             }
