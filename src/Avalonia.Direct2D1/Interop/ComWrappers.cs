@@ -61,12 +61,7 @@ public abstract class ComObject : IDisposable
         try
         {
             var native = ComMarshaller.ConvertToManaged(interfaceType, ptr);
-            return (T)Activator.CreateInstance(
-                typeof(T),
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public,
-                binder: null,
-                args: new[] { native },
-                culture: null)!;
+            return ComObjectFactory.Create<T>(native, interfaceType);
         }
         finally
         {
@@ -97,7 +92,7 @@ public abstract class ComObject : IDisposable
         return As<TInterface>(NativeObject);
     }
 
-    private static Type GetNativeInterfaceType(Type wrapperType)
+    internal static Type GetNativeInterfaceType(Type wrapperType)
     {
         var attribute = wrapperType.GetCustomAttribute<NativeInterfaceAttribute>();
 
@@ -185,11 +180,37 @@ internal static class ComObjectFactory
     public static T Create<T>(object native)
         where T : ComObject
     {
-        return (T)Activator.CreateInstance(
-            typeof(T),
-            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public,
-            binder: null,
-            args: new[] { native },
-            culture: null)!;
+        return Create<T>(native, ComObject.GetNativeInterfaceType(typeof(T)));
+    }
+
+    public static T Create<T>(object native, Type nativeInterfaceType)
+        where T : ComObject
+    {
+        return (T)Create(typeof(T), native, nativeInterfaceType);
+    }
+
+    private static object Create(Type wrapperType, object native, Type nativeInterfaceType)
+    {
+        var constructor = GetWrapperConstructor(wrapperType, nativeInterfaceType);
+        return constructor.Invoke(new[] { native });
+    }
+
+    private static ConstructorInfo GetWrapperConstructor(Type wrapperType, Type nativeInterfaceType)
+    {
+        var constructors = wrapperType.GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+        foreach (var constructor in constructors)
+        {
+            var parameters = constructor.GetParameters();
+
+            if (parameters.Length == 1 &&
+                (parameters[0].ParameterType == nativeInterfaceType ||
+                 parameters[0].ParameterType.IsAssignableFrom(nativeInterfaceType)))
+            {
+                return constructor;
+            }
+        }
+
+        throw new MissingMethodException($"Constructor on type '{wrapperType.FullName}' for native interface '{nativeInterfaceType.FullName}' not found.");
     }
 }

@@ -15,7 +15,7 @@ public abstract class DxgiObject : ComObject
     public unsafe T GetParent<T>()
         where T : ComObject
     {
-        var iid = typeof(T).GUID;
+        var iid = ComObject.GetNativeInterfaceType(typeof(T)).GUID;
         GetNative<W32DXGI.IDXGIObject>().GetParent(&iid, out var parent);
         return ComObjectFactory.Create<T>(parent);
     }
@@ -102,7 +102,7 @@ public sealed class SwapChain1 : DxgiObject
     public unsafe T GetBackBuffer<T>(int index)
         where T : ComObject
     {
-        var iid = typeof(T).GUID;
+        var iid = ComObject.GetNativeInterfaceType(typeof(T)).GUID;
         Native.GetBuffer((uint)index, &iid, out var buffer);
         return ComObjectFactory.Create<T>(buffer);
     }
