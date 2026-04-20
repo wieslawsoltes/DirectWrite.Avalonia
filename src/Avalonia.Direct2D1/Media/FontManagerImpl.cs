@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using Avalonia.Direct2D1.Interop;
 using Avalonia.Media;
 using Avalonia.Platform;
 using FontFamily = Avalonia.Media.FontFamily;
@@ -9,144 +10,161 @@ using FontStretch = Avalonia.Media.FontStretch;
 using FontStyle = Avalonia.Media.FontStyle;
 using FontWeight = Avalonia.Media.FontWeight;
 
-namespace Avalonia.Direct2D1.Media
+namespace Avalonia.Direct2D1.Media;
+
+internal class FontManagerImpl : IFontManagerImpl
 {
-    internal class FontManagerImpl : IFontManagerImpl
+    public string GetDefaultFontFamilyName()
     {
-        public string GetDefaultFontFamilyName()
+        return "Segoe UI";
+    }
+
+    public string[] GetInstalledFontFamilyNames(bool checkForUpdates = false)
+    {
+        var familyCount = Direct2D1FontCollectionCache.InstalledFontCollection.FontFamilyCount;
+        var fontFamilies = new string[(int)familyCount];
+
+        for (uint i = 0; i < familyCount; i++)
         {
-            //ToDo: Implement a real lookup of the system's default font.
-            return "Segoe UI";
+            using var family = Direct2D1FontCollectionCache.InstalledFontCollection.GetFontFamily(i);
+            fontFamilies[(int)i] = family.FamilyName;
         }
 
-        public string[] GetInstalledFontFamilyNames(bool checkForUpdates = false)
+        return fontFamilies;
+    }
+
+    public bool TryMatchCharacter(
+        int codepoint,
+        FontStyle fontStyle,
+        FontWeight fontWeight,
+        FontStretch fontStretch,
+        string? familyName,
+        CultureInfo? culture,
+        [NotNullWhen(returnValue: true)] out IPlatformTypeface? platformTypeface)
+    {
+        if (!string.IsNullOrWhiteSpace(familyName)
+            && TryCreateGlyphTypeface(familyName, fontStyle, fontWeight, fontStretch, out platformTypeface)
+            && ((GlyphTypefaceImpl)platformTypeface).Font.HasCharacter((uint)codepoint))
         {
-            var familyCount = Direct2D1FontCollectionCache.InstalledFontCollection.FontFamilyCount;
-
-            var fontFamilies = new string[familyCount];
-
-            for (var i = 0; i < familyCount; i++)
-            {
-                fontFamilies[i] = Direct2D1FontCollectionCache.InstalledFontCollection.GetFontFamily(i).FamilyNames.GetString(0);
-            }
-
-            return fontFamilies;
+            return true;
         }
 
-        public bool TryMatchCharacter(int codepoint, FontStyle fontStyle,
-            FontWeight fontWeight, FontStretch fontStretch, string? familyName, CultureInfo? culture,
-            [NotNullWhen(returnValue: true)] out IPlatformTypeface? platformTypeface)
+        var familyCount = Direct2D1FontCollectionCache.InstalledFontCollection.FontFamilyCount;
+
+        for (uint i = 0; i < familyCount; i++)
         {
-            if (!string.IsNullOrWhiteSpace(familyName)
-                && TryCreateGlyphTypeface(familyName, fontStyle, fontWeight, fontStretch, out platformTypeface)
-                && ((GlyphTypefaceImpl)platformTypeface).DWFont.HasCharacter(codepoint))
+            using var family = Direct2D1FontCollectionCache.InstalledFontCollection.GetFontFamily(i);
+            using var fonts = family.GetMatchingFonts((int)fontWeight, (DWRITE_FONT_STRETCH)fontStretch, (DWRITE_FONT_STYLE)fontStyle);
+
+            if (fonts.FontCount == 0)
             {
-                return true;
+                continue;
             }
 
-            var familyCount = Direct2D1FontCollectionCache.InstalledFontCollection.FontFamilyCount;
-            for (var i = 0; i < familyCount; i++)
+            var font = fonts.GetFont(0);
+
+            if (!font.HasCharacter((uint)codepoint))
             {
-                var font = Direct2D1FontCollectionCache.InstalledFontCollection.GetFontFamily(i)
-                    .GetMatchingFonts((SharpDX.DirectWrite.FontWeight)fontWeight,
-                        (SharpDX.DirectWrite.FontStretch)fontStretch,
-                        (SharpDX.DirectWrite.FontStyle)fontStyle).GetFont(0);
-
-                if (!font.HasCharacter(codepoint))
-                {
-                    continue;
-                }
-
-                platformTypeface = new GlyphTypefaceImpl(font);
-
-                return true;
+                font.Dispose();
+                continue;
             }
 
-            platformTypeface = null;
-
-            return false;
+            platformTypeface = new GlyphTypefaceImpl(font);
+            return true;
         }
 
-        public bool TryCreateGlyphTypeface(string familyName, FontStyle style, FontWeight weight,
-            FontStretch stretch, [NotNullWhen(returnValue: true)] out IPlatformTypeface? platformTypeface)
+        platformTypeface = null;
+        return false;
+    }
+
+    public bool TryCreateGlyphTypeface(
+        string familyName,
+        FontStyle style,
+        FontWeight weight,
+        FontStretch stretch,
+        [NotNullWhen(returnValue: true)] out IPlatformTypeface? platformTypeface)
+    {
+        var systemFonts = Direct2D1FontCollectionCache.InstalledFontCollection;
+
+        if (familyName == FontFamily.DefaultFontFamilyName)
         {
-            var systemFonts = Direct2D1FontCollectionCache.InstalledFontCollection;
-
-            if (familyName == FontFamily.DefaultFontFamilyName)
-            {
-                familyName = "Segoe UI";
-            }
-
-            if (systemFonts.FindFamilyName(familyName, out var index))
-            {
-                var font = systemFonts.GetFontFamily(index).GetFirstMatchingFont(
-                    (SharpDX.DirectWrite.FontWeight)weight,
-                    (SharpDX.DirectWrite.FontStretch)stretch,
-                    (SharpDX.DirectWrite.FontStyle)style);
-
-                platformTypeface = new GlyphTypefaceImpl(font);
-
-                return true;
-            }
-
-            platformTypeface = null;
-
-            return false;
+            familyName = "Segoe UI";
         }
 
-        public bool TryCreateGlyphTypeface(Stream stream, FontSimulations fontSimulations,
-            [NotNullWhen(returnValue: true)] out IPlatformTypeface? platformTypeface)
+        if (systemFonts.FindFamilyName(familyName, out var index))
         {
-            var fontLoader = new DWriteResourceFontLoader(Direct2D1Platform.DirectWriteFactory, new[] { stream });
+            using var family = systemFonts.GetFontFamily(index);
+            var font = family.GetFirstMatchingFont((int)weight, (DWRITE_FONT_STRETCH)stretch, (DWRITE_FONT_STYLE)style);
 
-            var fontCollection = new SharpDX.DirectWrite.FontCollection(Direct2D1Platform.DirectWriteFactory, fontLoader, fontLoader.Key);
-
-            if (fontCollection.FontFamilyCount > 0)
-            {
-                var fontFamily = fontCollection.GetFontFamily(0);
-
-                if (fontFamily.FontCount > 0)
-                {
-                    var font = fontFamily.GetFont(0);
-
-                    platformTypeface = new GlyphTypefaceImpl(font);
-
-                    return true;
-                }
-            }
-
-            platformTypeface = null;
-
-            return false;
+            platformTypeface = new GlyphTypefaceImpl(font);
+            return true;
         }
 
-        public bool TryGetFamilyTypefaces(string familyName, [NotNullWhen(true)] out IReadOnlyList<Typeface>? familyTypefaces)
+        platformTypeface = null;
+        return false;
+    }
+
+    public bool TryCreateGlyphTypeface(
+        Stream stream,
+        FontSimulations fontSimulations,
+        [NotNullWhen(returnValue: true)] out IPlatformTypeface? platformTypeface)
+    {
+        platformTypeface = null;
+
+        var customFontCollection = Direct2D1Platform.DirectWriteFactory.CreateCustomFontCollection([stream]);
+
+        try
         {
-            familyTypefaces = null;
-
-            var systemFonts = Direct2D1FontCollectionCache.InstalledFontCollection;
-
-            if (!systemFonts.FindFamilyName(familyName, out var index))
+            if (customFontCollection.FontCollection.FontFamilyCount == 0)
             {
+                customFontCollection.Dispose();
                 return false;
             }
 
-            var family = systemFonts.GetFontFamily(index);
-            var typefaces = new List<Typeface>(family.FontCount);
+            using var fontFamily = customFontCollection.FontCollection.GetFontFamily(0);
 
-            for (var i = 0; i < family.FontCount; i++)
+            if (fontFamily.FontCount == 0)
             {
-                var font = family.GetFont(i);
-                typefaces.Add(new Typeface(
-                    familyName,
-                    (FontStyle)font.Style,
-                    (FontWeight)font.Weight,
-                    (FontStretch)font.Stretch));
+                customFontCollection.Dispose();
+                return false;
             }
 
-            familyTypefaces = typefaces;
-
+            var font = fontFamily.GetFont(0);
+            platformTypeface = new GlyphTypefaceImpl(font, customFontCollection);
             return true;
         }
+        catch
+        {
+            customFontCollection.Dispose();
+            throw;
+        }
+    }
+
+    public bool TryGetFamilyTypefaces(string familyName, [NotNullWhen(true)] out IReadOnlyList<Typeface>? familyTypefaces)
+    {
+        familyTypefaces = null;
+
+        var systemFonts = Direct2D1FontCollectionCache.InstalledFontCollection;
+
+        if (!systemFonts.FindFamilyName(familyName, out var index))
+        {
+            return false;
+        }
+
+        using var family = systemFonts.GetFontFamily(index);
+        var typefaces = new List<Typeface>((int)family.FontCount);
+
+        for (uint i = 0; i < family.FontCount; i++)
+        {
+            using var font = family.GetFont(i);
+            typefaces.Add(new Typeface(
+                familyName,
+                (FontStyle)font.Style,
+                (FontWeight)font.Weight,
+                (FontStretch)font.Stretch));
+        }
+
+        familyTypefaces = typefaces;
+        return true;
     }
 }

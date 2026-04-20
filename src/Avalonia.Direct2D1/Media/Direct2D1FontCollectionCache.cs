@@ -1,72 +1,76 @@
+using System;
 using System.Collections.Concurrent;
+using System.Linq;
+using Avalonia.Direct2D1.Interop;
 using Avalonia.Media;
 using Avalonia.Media.Fonts;
-using SharpDX.DirectWrite;
-using FontFamily = Avalonia.Media.FontFamily;
-using FontStyle = SharpDX.DirectWrite.FontStyle;
-using FontWeight = SharpDX.DirectWrite.FontWeight;
-using FontStretch = SharpDX.DirectWrite.FontStretch;
 using Avalonia.Platform;
-using System.Linq;
-using System;
+using FontFamily = Avalonia.Media.FontFamily;
 
-namespace Avalonia.Direct2D1.Media
+namespace Avalonia.Direct2D1.Media;
+
+internal static class Direct2D1FontCollectionCache
 {
-    internal static class Direct2D1FontCollectionCache
+    private static readonly ConcurrentDictionary<FontFamilyKey, DWriteCustomFontCollection> s_cachedCollections;
+    internal static readonly DWriteFontCollection InstalledFontCollection;
+
+    static Direct2D1FontCollectionCache()
     {
-        private static readonly ConcurrentDictionary<FontFamilyKey, FontCollection> s_cachedCollections;
-        internal static readonly FontCollection InstalledFontCollection;
+        s_cachedCollections = new ConcurrentDictionary<FontFamilyKey, DWriteCustomFontCollection>();
+        InstalledFontCollection = Direct2D1Platform.DirectWriteFactory.GetSystemFontCollection(checkForUpdates: false);
+    }
 
-        static Direct2D1FontCollectionCache()
+    public static DWriteFont GetFont(Typeface typeface)
+    {
+        var fontFamily = typeface.FontFamily;
+        var fontCollection = GetOrAddFontCollection(fontFamily);
+
+        foreach (var name in fontFamily.FamilyNames)
         {
-            s_cachedCollections = new ConcurrentDictionary<FontFamilyKey, FontCollection>();
-
-            InstalledFontCollection = Direct2D1Platform.DirectWriteFactory.GetSystemFontCollection(false);
-        }
-
-        public static Font GetFont(Typeface typeface)
-        {
-            var fontFamily = typeface.FontFamily;
-            var fontCollection = GetOrAddFontCollection(fontFamily);
-            int index;
-
-            foreach (var name in fontFamily.FamilyNames)
+            if (fontCollection.FindFamilyName(name, out var index))
             {
-                if (fontCollection.FindFamilyName(name, out index))
-                {
-                    return fontCollection.GetFontFamily(index).GetFirstMatchingFont(
-                        (FontWeight)typeface.Weight,
-                        (FontStretch)typeface.Stretch,
-                        (FontStyle)typeface.Style);
-                }
+                using var family = fontCollection.GetFontFamily(index);
+                return family.GetFirstMatchingFont(
+                    (int)typeface.Weight,
+                    (DWRITE_FONT_STRETCH)typeface.Stretch,
+                    (DWRITE_FONT_STYLE)typeface.Style);
             }
-
-            InstalledFontCollection.FindFamilyName("Segoe UI", out index);
-
-            return InstalledFontCollection.GetFontFamily(index).GetFirstMatchingFont(
-                (FontWeight)typeface.Weight,
-                (FontStretch)typeface.Stretch,
-                (FontStyle)typeface.Style);
         }
 
-        private static FontCollection GetOrAddFontCollection(FontFamily fontFamily)
+        InstalledFontCollection.FindFamilyName("Segoe UI", out var defaultIndex);
+
+        using var defaultFamily = InstalledFontCollection.GetFontFamily(defaultIndex);
+
+        return defaultFamily.GetFirstMatchingFont(
+            (int)typeface.Weight,
+            (DWRITE_FONT_STRETCH)typeface.Stretch,
+            (DWRITE_FONT_STYLE)typeface.Style);
+    }
+
+    private static DWriteFontCollection GetOrAddFontCollection(FontFamily fontFamily)
+    {
+        return fontFamily.Key is null
+            ? InstalledFontCollection
+            : s_cachedCollections.GetOrAdd(fontFamily.Key, CreateFontCollection).FontCollection;
+    }
+
+    private static DWriteCustomFontCollection CreateFontCollection(FontFamilyKey key)
+    {
+        var source = key.BaseUri != null ? new Uri(key.BaseUri, key.Source) : key.Source;
+        var assets = Direct2D1FontFamilyLoader.LoadFontAssets(source).ToArray();
+        var assetLoader = AvaloniaLocator.Current.GetRequiredService<IAssetLoader>();
+        var streams = assets.Select(asset => assetLoader.Open(asset)).ToArray();
+
+        try
         {
-            return fontFamily.Key == null ? InstalledFontCollection : s_cachedCollections.GetOrAdd(fontFamily.Key, CreateFontCollection);
+            return Direct2D1Platform.DirectWriteFactory.CreateCustomFontCollection(streams);
         }
-
-        private static FontCollection CreateFontCollection(FontFamilyKey key)
+        finally
         {
-            var source = key.BaseUri != null ? new Uri(key.BaseUri, key.Source) : key.Source;
-
-            var assets = Direct2D1FontFamilyLoader.LoadFontAssets(source);
-
-            var assetLoader = AvaloniaLocator.Current.GetRequiredService<IAssetLoader>();
-
-            var fontAssets = assets.Select(x => assetLoader.Open(x)).ToArray();
-
-            var fontLoader = new DWriteResourceFontLoader(Direct2D1Platform.DirectWriteFactory, fontAssets);
-
-            return new FontCollection(Direct2D1Platform.DirectWriteFactory, fontLoader, fontLoader.Key);
+            foreach (var stream in streams)
+            {
+                stream.Dispose();
+            }
         }
     }
 }

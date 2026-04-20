@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using Avalonia.Direct2D1.Interop;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Utilities;
@@ -17,7 +19,7 @@ namespace Avalonia.Direct2D1.Media
     /// <summary>
     /// Draws using Direct2D1.
     /// </summary>
-    internal class DrawingContextImpl : IDrawingContextImpl
+    internal unsafe class DrawingContextImpl : IDrawingContextImpl
     {
         private readonly ILayerFactory? _layerFactory;
         private readonly SharpDX.Direct2D1.RenderTarget _renderTarget;
@@ -424,11 +426,29 @@ namespace Avalonia.Direct2D1.Media
             using (var brush = CreateBrush(foreground, glyphRun.Bounds))
             {
                 var immutableGlyphRun = (GlyphRunImpl)glyphRun;
+                var fontFacePtr = Marshal.GetIUnknownForObject(immutableGlyphRun.FontFace.Native);
 
-                var dxGlyphRun = immutableGlyphRun.GlyphRun;
-
-                _renderTarget.DrawGlyphRun(glyphRun.BaselineOrigin.ToSharpDX(), dxGlyphRun,
-                    brush.PlatformBrush, MeasuringMode.Natural);
+                try
+                {
+                    D2D1TextInterop.DrawGlyphRun(
+                        _renderTarget.NativePointer,
+                        new D2D_POINT_2F
+                        {
+                            X = (float)glyphRun.BaselineOrigin.X,
+                            Y = (float)glyphRun.BaselineOrigin.Y
+                        },
+                        fontFacePtr,
+                        (float)glyphRun.FontRenderingEmSize,
+                        immutableGlyphRun.GlyphIndices,
+                        immutableGlyphRun.GlyphAdvances,
+                        immutableGlyphRun.GlyphOffsets,
+                        0,
+                        brush.PlatformBrush?.NativePointer ?? IntPtr.Zero);
+                }
+                finally
+                {
+                    Marshal.Release(fontFacePtr);
+                }
             }
         }
 

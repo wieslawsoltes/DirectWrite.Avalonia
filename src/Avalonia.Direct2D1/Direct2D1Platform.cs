@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Avalonia.Direct2D1.Interop;
 using Avalonia.Direct2D1.Media;
 using Avalonia.Direct2D1.Media.Imaging;
 using Avalonia.Media;
@@ -44,9 +45,9 @@ namespace Avalonia.Direct2D1
 
         public static SharpDX.Direct2D1.Device Direct2D1Device { get; private set; } = null!;
 
-        public static SharpDX.DirectWrite.Factory1 DirectWriteFactory { get; private set; } = null!;
+        public static DWriteFactory DirectWriteFactory { get; private set; } = null!;
 
-        public static SharpDX.DirectWrite.TextAnalyzer DirectWriteTextAnalyzer { get; private set; } = null!;
+        public static DWriteTextAnalyzer DirectWriteTextAnalyzer { get; private set; } = null!;
 
         public static SharpDX.WIC.ImagingFactory ImagingFactory { get; private set; } = null!;
 
@@ -163,12 +164,8 @@ namespace Avalonia.Direct2D1
                 Options = ResolveOptions();
                 Direct2D1Factory = CreateFactory(Options);
 
-                using (var factory = new SharpDX.DirectWrite.Factory())
-                {
-                    DirectWriteFactory = factory.QueryInterface<SharpDX.DirectWrite.Factory1>();
-                }
-
-                DirectWriteTextAnalyzer = new SharpDX.DirectWrite.TextAnalyzer(DirectWriteFactory);
+                DirectWriteFactory = DWriteFactory.CreateShared();
+                DirectWriteTextAnalyzer = DirectWriteFactory.CreateTextAnalyzer();
 
                 ImagingFactory = new SharpDX.WIC.ImagingFactory();
 
@@ -296,14 +293,19 @@ namespace Avalonia.Direct2D1
             using (var sink = pathGeometry.Open())
             {
                 var glyphInfos = glyphRun.GlyphInfos;
-                var glyphs = new short[glyphInfos.Count];
+                var glyphs = new ushort[glyphInfos.Count];
 
                 for (int i = 0; i < glyphInfos.Count; i++)
                 {
-                    glyphs[i] = (short)glyphInfos[i].GlyphIndex;
+                    glyphs[i] = glyphInfos[i].GlyphIndex;
                 }
 
-                glyphTypeface.FontFace.GetGlyphRunOutline((float)glyphRun.FontRenderingEmSize, glyphs, null, null, false, !glyphRun.IsLeftToRight, sink);
+                glyphTypeface.FontFace.GetGlyphRunOutline(
+                    (float)glyphRun.FontRenderingEmSize,
+                    glyphs,
+                    isSideways: false,
+                    isRightToLeft: !glyphRun.IsLeftToRight,
+                    ((SharpDX.CppObject)sink).NativePointer);
 
                 sink.Close();
             }

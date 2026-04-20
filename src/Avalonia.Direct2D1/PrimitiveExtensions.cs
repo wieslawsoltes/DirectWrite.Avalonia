@@ -4,7 +4,6 @@ using Avalonia.Platform;
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.Mathematics.Interop;
-using DWrite = SharpDX.DirectWrite;
 
 namespace Avalonia.Direct2D1
 {
@@ -208,19 +207,5 @@ namespace Avalonia.Direct2D1
                 (float)rect.Bottom);
         }
 
-        public static DWrite.TextAlignment ToDirect2D(this Avalonia.Media.TextAlignment alignment)
-        {
-            switch (alignment)
-            {
-                case Avalonia.Media.TextAlignment.Left:
-                    return DWrite.TextAlignment.Leading;
-                case Avalonia.Media.TextAlignment.Center:
-                    return DWrite.TextAlignment.Center;
-                case Avalonia.Media.TextAlignment.Right:
-                    return DWrite.TextAlignment.Trailing;
-                default:
-                    throw new InvalidOperationException("Invalid TextAlignment");
-            }
-        }
     }
 }
