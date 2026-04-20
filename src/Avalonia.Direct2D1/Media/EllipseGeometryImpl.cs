@@ -1,4 +1,4 @@
-using SharpDX.Direct2D1;
+using Avalonia.Direct2D1.Interop.Direct2D1;
 
 namespace Avalonia.Direct2D1.Media
 {
@@ -17,7 +17,7 @@ namespace Avalonia.Direct2D1.Media
 
         private static Geometry CreateGeometry(Rect rect)
         {
-            var ellipse = new Ellipse(rect.Center.ToSharpDX(), (float)rect.Width / 2, (float)rect.Height / 2);
+            var ellipse = new Ellipse(rect.Center.ToInterop(), (float)rect.Width / 2, (float)rect.Height / 2);
             return new EllipseGeometry(Direct2D1Platform.Direct2D1Factory, ellipse);
         }
     }

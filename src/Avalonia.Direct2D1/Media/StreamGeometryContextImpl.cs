@@ -3,9 +3,9 @@ using Avalonia.Logging;
 using Avalonia.Media;
 using Avalonia.Metadata;
 using Avalonia.Platform;
-using SharpDX.Direct2D1;
-using D2D = SharpDX.Direct2D1;
-using SweepDirection = SharpDX.Direct2D1.SweepDirection;
+using Avalonia.Direct2D1.Interop.Direct2D1;
+using D2D = Avalonia.Direct2D1.Interop.Direct2D1;
+using SweepDirection = Avalonia.Direct2D1.Interop.Direct2D1.SweepDirection;
 
 namespace Avalonia.Direct2D1.Media
 {
@@ -28,8 +28,8 @@ namespace Avalonia.Direct2D1.Media
         {
             _sink.AddArc(new D2D.ArcSegment
             {
-                Point = point.ToSharpDX(),
-                Size = size.ToSharpDX(),
+                Point = point.ToInterop(),
+                Size = size.ToInterop(),
                 RotationAngle = (float)rotationAngle,
                 ArcSize = isLargeArc ? ArcSize.Large : ArcSize.Small,
                 SweepDirection = (SweepDirection)sweepDirection,
@@ -38,16 +38,16 @@ namespace Avalonia.Direct2D1.Media
 
         public void BeginFigure(Point startPoint, bool isFilled)
         {
-            _sink.BeginFigure(startPoint.ToSharpDX(), isFilled ? FigureBegin.Filled : FigureBegin.Hollow);
+            _sink.BeginFigure(startPoint.ToInterop(), isFilled ? FigureBegin.Filled : FigureBegin.Hollow);
         }
 
         public void CubicBezierTo(Point point1, Point point2, Point point3, bool isStroked = true)
         {
             _sink.AddBezier(new D2D.BezierSegment
             {
-                Point1 = point1.ToSharpDX(),
-                Point2 = point2.ToSharpDX(),
-                Point3 = point3.ToSharpDX(),
+                Point1 = point1.ToInterop(),
+                Point2 = point2.ToInterop(),
+                Point3 = point3.ToInterop(),
             });
         }
 
@@ -55,14 +55,14 @@ namespace Avalonia.Direct2D1.Media
         {
             _sink.AddQuadraticBezier(new D2D.QuadraticBezierSegment
             {
-                Point1 = control.ToSharpDX(),
-                Point2 = dest.ToSharpDX()
+                Point1 = control.ToInterop(),
+                Point2 = dest.ToInterop()
             });
         }
 
         public void LineTo(Point point, bool isStroked = true)
         {
-            _sink.AddLine(point.ToSharpDX());
+            _sink.AddLine(point.ToInterop());
         }
 
         public void EndFigure(bool isClosed)

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Avalonia.Metadata;
-using SharpDX.Direct2D1;
-using SharpDX.WIC;
+using Avalonia.Direct2D1.Interop.Direct2D1;
+using Avalonia.Direct2D1.Interop.WIC;
 
 namespace Avalonia.Direct2D1.Media
 {
@@ -20,7 +20,7 @@ namespace Avalonia.Direct2D1.Media
         /// <param name="d2DBitmap">The GPU bitmap.</param>
         /// <remarks>
         /// This bitmap must be either from the same render target,
-        /// or if the render target is a <see cref="SharpDX.Direct2D1.DeviceContext"/>,
+        /// or if the render target is a <see cref="Avalonia.Direct2D1.Interop.Direct2D1.DeviceContext"/>,
         /// the device associated with this context, to be renderable.
         /// </remarks>
         public D2DBitmapImpl(Bitmap1 d2DBitmap)
@@ -37,7 +37,7 @@ namespace Avalonia.Direct2D1.Media
             _direct2DBitmap.Dispose();
         }
 
-        public override OptionalDispose<Bitmap1> GetDirect2DBitmap(SharpDX.Direct2D1.RenderTarget target)
+        public override OptionalDispose<Bitmap1> GetDirect2DBitmap(Avalonia.Direct2D1.Interop.Direct2D1.RenderTarget target)
         {
             return new OptionalDispose<Bitmap1>(_direct2DBitmap, false);
         }

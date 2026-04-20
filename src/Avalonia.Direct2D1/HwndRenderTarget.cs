@@ -1,7 +1,6 @@
 ﻿using Avalonia.Platform;
 using Avalonia.Direct2D1.Interop;
-using SharpDX;
-using SharpDX.DXGI;
+using Avalonia.Direct2D1.Interop.DXGI;
 
 namespace Avalonia.Direct2D1
 {

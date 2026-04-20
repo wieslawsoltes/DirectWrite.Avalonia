@@ -11,7 +11,7 @@ using Avalonia.Media.TextFormatting;
 using Avalonia.Platform;
 using Avalonia.Platform.Surfaces;
 using GlyphRun = Avalonia.Media.GlyphRun;
-using SharpDX.Mathematics.Interop;
+using Avalonia.Direct2D1.Interop.Mathematics;
 
 namespace Avalonia
 {
@@ -39,19 +39,19 @@ namespace Avalonia.Direct2D1
         private static readonly Direct2D1Platform s_instance = new Direct2D1Platform();
         internal static Direct2D1Options Options { get; private set; } = new Direct2D1Options();
 
-        public static SharpDX.Direct3D11.Device Direct3D11Device { get; private set; } = null!;
+        public static Avalonia.Direct2D1.Interop.Direct3D11.Device Direct3D11Device { get; private set; } = null!;
 
-        public static SharpDX.Direct2D1.Factory1 Direct2D1Factory { get; private set; } = null!;
+        public static Avalonia.Direct2D1.Interop.Direct2D1.Factory1 Direct2D1Factory { get; private set; } = null!;
 
-        public static SharpDX.Direct2D1.Device Direct2D1Device { get; private set; } = null!;
+        public static Avalonia.Direct2D1.Interop.Direct2D1.Device Direct2D1Device { get; private set; } = null!;
 
         public static DWriteFactory DirectWriteFactory { get; private set; } = null!;
 
         public static DWriteTextAnalyzer DirectWriteTextAnalyzer { get; private set; } = null!;
 
-        public static SharpDX.WIC.ImagingFactory ImagingFactory { get; private set; } = null!;
+        public static Avalonia.Direct2D1.Interop.WIC.ImagingFactory ImagingFactory { get; private set; } = null!;
 
-        public static SharpDX.DXGI.Device1 DxgiDevice { get; private set; } = null!;
+        public static Avalonia.Direct2D1.Interop.DXGI.Device1 DxgiDevice { get; private set; } = null!;
 
         private static readonly object s_initLock = new object();
         private static bool s_initialized = false;
@@ -61,15 +61,15 @@ namespace Avalonia.Direct2D1
             return AvaloniaLocator.Current.GetService<Direct2D1Options>() ?? new Direct2D1Options();
         }
 
-        private static SharpDX.Direct2D1.Factory1 CreateFactory(Direct2D1Options options)
+        private static Avalonia.Direct2D1.Interop.Direct2D1.Factory1 CreateFactory(Direct2D1Options options)
         {
             if (options.EnableDiagnostics)
             {
                 try
                 {
-                    return new SharpDX.Direct2D1.Factory1(
-                        SharpDX.Direct2D1.FactoryType.MultiThreaded,
-                        SharpDX.Direct2D1.DebugLevel.Information);
+                    return new Avalonia.Direct2D1.Interop.Direct2D1.Factory1(
+                        Avalonia.Direct2D1.Interop.Direct2D1.FactoryType.MultiThreaded,
+                        Avalonia.Direct2D1.Interop.Direct2D1.DebugLevel.Information);
                 }
                 catch
                 {
@@ -82,9 +82,9 @@ namespace Avalonia.Direct2D1
             {
                 try
                 {
-                    return new SharpDX.Direct2D1.Factory1(
-                        SharpDX.Direct2D1.FactoryType.MultiThreaded,
-                        SharpDX.Direct2D1.DebugLevel.Error);
+                    return new Avalonia.Direct2D1.Interop.Direct2D1.Factory1(
+                        Avalonia.Direct2D1.Interop.Direct2D1.FactoryType.MultiThreaded,
+                        Avalonia.Direct2D1.Interop.Direct2D1.DebugLevel.Error);
                 }
                 catch
                 {
@@ -93,25 +93,25 @@ namespace Avalonia.Direct2D1
             }
 #endif
 
-            return new SharpDX.Direct2D1.Factory1(
-                SharpDX.Direct2D1.FactoryType.MultiThreaded,
-                SharpDX.Direct2D1.DebugLevel.None);
+            return new Avalonia.Direct2D1.Interop.Direct2D1.Factory1(
+                Avalonia.Direct2D1.Interop.Direct2D1.FactoryType.MultiThreaded,
+                Avalonia.Direct2D1.Interop.Direct2D1.DebugLevel.None);
         }
 
-        private static SharpDX.Direct3D11.Device CreateD3D11Device(
+        private static Avalonia.Direct2D1.Interop.Direct3D11.Device CreateD3D11Device(
             Direct2D1Options options,
-            SharpDX.Direct3D.FeatureLevel[] featureLevels)
+            Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel[] featureLevels)
         {
-            var flags = SharpDX.Direct3D11.DeviceCreationFlags.BgraSupport |
-                        SharpDX.Direct3D11.DeviceCreationFlags.VideoSupport;
+            var flags = Avalonia.Direct2D1.Interop.Direct3D11.DeviceCreationFlags.BgraSupport |
+                        Avalonia.Direct2D1.Interop.Direct3D11.DeviceCreationFlags.VideoSupport;
 
             if (options.EnableDiagnostics)
             {
                 try
                 {
-                    return CreateD3D11Device(options, featureLevels, flags | SharpDX.Direct3D11.DeviceCreationFlags.Debug);
+                    return CreateD3D11Device(options, featureLevels, flags | Avalonia.Direct2D1.Interop.Direct3D11.DeviceCreationFlags.Debug);
                 }
-                catch (SharpDX.SharpDXException)
+                catch (Avalonia.Direct2D1.Interop.DirectXException)
                 {
                     // Some systems don't have the Direct3D debug layer installed. Retry without it.
                 }
@@ -120,21 +120,21 @@ namespace Avalonia.Direct2D1
             return CreateD3D11Device(options, featureLevels, flags);
         }
 
-        private static SharpDX.Direct3D11.Device CreateD3D11Device(
+        private static Avalonia.Direct2D1.Interop.Direct3D11.Device CreateD3D11Device(
             Direct2D1Options options,
-            SharpDX.Direct3D.FeatureLevel[] featureLevels,
-            SharpDX.Direct3D11.DeviceCreationFlags flags)
+            Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel[] featureLevels,
+            Avalonia.Direct2D1.Interop.Direct3D11.DeviceCreationFlags flags)
         {
             if (options.UseHardwareAcceleration)
             {
                 try
                 {
-                    return new SharpDX.Direct3D11.Device(
-                        SharpDX.Direct3D.DriverType.Hardware,
+                    return new Avalonia.Direct2D1.Interop.Direct3D11.Device(
+                        Avalonia.Direct2D1.Interop.Direct3D.DriverType.Hardware,
                         flags,
                         featureLevels);
                 }
-                catch (SharpDX.SharpDXException) when (options.UseWarpFallback)
+                catch (Avalonia.Direct2D1.Interop.DirectXException) when (options.UseWarpFallback)
                 {
                     // Fall back to WARP when requested.
                 }
@@ -142,8 +142,8 @@ namespace Avalonia.Direct2D1
 
             if (!options.UseHardwareAcceleration || options.UseWarpFallback)
             {
-                return new SharpDX.Direct3D11.Device(
-                    SharpDX.Direct3D.DriverType.Warp,
+                return new Avalonia.Direct2D1.Interop.Direct3D11.Device(
+                    Avalonia.Direct2D1.Interop.Direct3D.DriverType.Warp,
                     flags,
                     featureLevels);
             }
@@ -167,24 +167,24 @@ namespace Avalonia.Direct2D1
                 DirectWriteFactory = DWriteFactory.CreateShared();
                 DirectWriteTextAnalyzer = DirectWriteFactory.CreateTextAnalyzer();
 
-                ImagingFactory = new SharpDX.WIC.ImagingFactory();
+                ImagingFactory = new Avalonia.Direct2D1.Interop.WIC.ImagingFactory();
 
                 var featureLevels = new[]
                 {
-                    SharpDX.Direct3D.FeatureLevel.Level_11_1,
-                    SharpDX.Direct3D.FeatureLevel.Level_11_0,
-                    SharpDX.Direct3D.FeatureLevel.Level_10_1,
-                    SharpDX.Direct3D.FeatureLevel.Level_10_0,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_3,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_2,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_1,
+                    Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel.Level_11_1,
+                    Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel.Level_11_0,
+                    Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel.Level_10_1,
+                    Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel.Level_10_0,
+                    Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel.Level_9_3,
+                    Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel.Level_9_2,
+                    Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel.Level_9_1,
                 };
 
                 Direct3D11Device = CreateD3D11Device(Options, featureLevels);
 
-                DxgiDevice = Direct3D11Device.QueryInterface<SharpDX.DXGI.Device1>();
+                DxgiDevice = Direct3D11Device.QueryInterface<Avalonia.Direct2D1.Interop.DXGI.Device1>();
 
-                Direct2D1Device = new SharpDX.Direct2D1.Device(Direct2D1Factory, DxgiDevice);
+                Direct2D1Device = new Avalonia.Direct2D1.Interop.Direct2D1.Device(Direct2D1Factory, DxgiDevice);
 
                 s_initialized = true;
             }
@@ -196,7 +196,7 @@ namespace Avalonia.Direct2D1
             AvaloniaLocator.CurrentMutable
                 .Bind<IFontManagerImpl>().ToConstant(new FontManagerImpl())
                 .Bind<ITextShaperImpl>().ToConstant(new TextShaperImpl());
-            SharpDX.Configuration.EnableReleaseOnFinalizer = true;
+            Avalonia.Direct2D1.Interop.Configuration.EnableReleaseOnFinalizer = true;
         }
 
         public static void Initialize()
@@ -288,7 +288,7 @@ namespace Avalonia.Direct2D1
                 throw new InvalidOperationException("PlatformImpl can't be null.");
             }
 
-            var pathGeometry = new SharpDX.Direct2D1.PathGeometry(Direct2D1Factory);
+            var pathGeometry = new Avalonia.Direct2D1.Interop.Direct2D1.PathGeometry(Direct2D1Factory);
 
             using (var sink = pathGeometry.Open())
             {
@@ -305,14 +305,14 @@ namespace Avalonia.Direct2D1
                     glyphs,
                     isSideways: false,
                     isRightToLeft: !glyphRun.IsLeftToRight,
-                    ((SharpDX.CppObject)sink).NativePointer);
+                    sink);
 
                 sink.Close();
             }
 
             var (baselineOriginX, baselineOriginY) = glyphRun.BaselineOrigin;
 
-            var transformedGeometry = new SharpDX.Direct2D1.TransformedGeometry(
+            var transformedGeometry = new Avalonia.Direct2D1.Interop.Direct2D1.TransformedGeometry(
                 Direct2D1Factory,
                 pathGeometry,
                 new RawMatrix3x2(1.0f, 0.0f, 0.0f, 1.0f, (float)baselineOriginX, (float)baselineOriginY));
@@ -322,7 +322,7 @@ namespace Avalonia.Direct2D1
 
         private class TransformedGeometryWrapper : GeometryImpl
         {
-            public TransformedGeometryWrapper(SharpDX.Direct2D1.TransformedGeometry geometry) : base(geometry)
+            public TransformedGeometryWrapper(Avalonia.Direct2D1.Interop.Direct2D1.TransformedGeometry geometry) : base(geometry)
             {
 
             }
@@ -377,7 +377,7 @@ namespace Avalonia.Direct2D1
         /// <inheritdoc />
         public IBitmapImpl ResizeBitmap(IBitmapImpl bitmapImpl, PixelSize destinationSize, BitmapInterpolationMode interpolationMode = BitmapInterpolationMode.HighQuality)
         {
-            // https://github.com/sharpdx/SharpDX/issues/959 blocks implementation.
+            // Compatibility-wrapper limitation: rewrite required for effect support blocks implementation.
             throw new NotImplementedException();
         }
 

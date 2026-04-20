@@ -5,7 +5,7 @@ using Avalonia.Direct2D1.Interop;
 using Avalonia.Direct2D1.Media;
 using Avalonia.Platform;
 using Avalonia.Platform.Surfaces;
-using SharpDX.WIC;
+using Avalonia.Direct2D1.Interop.WIC;
 using PixelFormat = Avalonia.Platform.PixelFormat;
 
 namespace Avalonia.Direct2D1

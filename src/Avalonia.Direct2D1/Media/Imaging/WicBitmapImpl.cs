@@ -1,12 +1,12 @@
 using System;
 using System.IO;
 using Avalonia.Direct2D1.Interop;
-using SharpDX.WIC;
+using Avalonia.Direct2D1.Interop.WIC;
 using APixelFormat = Avalonia.Platform.PixelFormat;
 using AlphaFormat = Avalonia.Platform.AlphaFormat;
-using D2DBitmap = SharpDX.Direct2D1.Bitmap1;
+using D2DBitmap = Avalonia.Direct2D1.Interop.Direct2D1.Bitmap1;
 using Avalonia.Platform;
-using PixelFormat = SharpDX.WIC.PixelFormat;
+using PixelFormat = Avalonia.Direct2D1.Interop.WIC.PixelFormat;
 
 namespace Avalonia.Direct2D1.Media
 {
@@ -164,12 +164,12 @@ namespace Avalonia.Direct2D1.Media
 
         private void SetFormatFromWic(Guid pixelFormat)
         {
-            if (pixelFormat == SharpDX.WIC.PixelFormat.Format16bppBGR565)
+            if (pixelFormat == Avalonia.Direct2D1.Interop.WIC.PixelFormat.Format16bppBGR565)
             {
                 PixelFormat = APixelFormat.Rgb565;
                 AlphaFormat = Platform.AlphaFormat.Premul;
             }
-            else if (pixelFormat == SharpDX.WIC.PixelFormat.Format32bppRGB)
+            else if (pixelFormat == Avalonia.Direct2D1.Interop.WIC.PixelFormat.Format32bppRGB)
             {
                 PixelFormat = APixelFormat.Rgb32;
                 AlphaFormat = Platform.AlphaFormat.Premul;
@@ -220,10 +220,10 @@ namespace Avalonia.Direct2D1.Media
         /// </summary>
         /// <param name="renderTarget">The render target.</param>
         /// <returns>The Direct2D bitmap.</returns>
-        public override OptionalDispose<D2DBitmap> GetDirect2DBitmap(SharpDX.Direct2D1.RenderTarget renderTarget)
+        public override OptionalDispose<D2DBitmap> GetDirect2DBitmap(Avalonia.Direct2D1.Interop.Direct2D1.RenderTarget renderTarget)
         {
             using var converter = new FormatConverter(Direct2D1Platform.ImagingFactory);
-            converter.Initialize(WicImpl, SharpDX.WIC.PixelFormat.Format32bppPBGRA);
+            converter.Initialize(WicImpl, Avalonia.Direct2D1.Interop.WIC.PixelFormat.Format32bppPBGRA);
 
             var d2dBitmap = D2DBitmap.FromWicBitmap(renderTarget, converter).QueryInterface<D2DBitmap>();
 

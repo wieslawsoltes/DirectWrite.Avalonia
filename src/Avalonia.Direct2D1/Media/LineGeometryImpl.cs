@@ -1,4 +1,4 @@
-using SharpDX.Direct2D1;
+using Avalonia.Direct2D1.Interop.Direct2D1;
 
 namespace Avalonia.Direct2D1.Media
 {
@@ -14,8 +14,8 @@ namespace Avalonia.Direct2D1.Media
         {
             using (var sink = ((PathGeometry)Geometry).Open())
             {
-                sink.BeginFigure(p1.ToSharpDX(), FigureBegin.Hollow);
-                sink.AddLine(p2.ToSharpDX());
+                sink.BeginFigure(p1.ToInterop(), FigureBegin.Hollow);
+                sink.AddLine(p2.ToInterop());
                 sink.EndFigure(FigureEnd.Open);
                 sink.Close();
             }

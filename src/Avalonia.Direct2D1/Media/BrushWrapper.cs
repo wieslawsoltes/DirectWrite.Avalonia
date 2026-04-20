@@ -1,9 +1,7 @@
 using Avalonia.Media;
-using SharpDX;
-
 namespace Avalonia.Direct2D1.Media
 {
-    internal class BrushWrapper : ComObject
+    internal class BrushWrapper
     {
         public BrushWrapper(IBrush brush)
         {

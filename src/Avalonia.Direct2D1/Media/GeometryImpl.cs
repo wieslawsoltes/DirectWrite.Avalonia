@@ -2,9 +2,9 @@ using System;
 using Avalonia.Logging;
 using Avalonia.Media;
 using Avalonia.Platform;
-using SharpDX.Direct2D1;
-using Geometry = SharpDX.Direct2D1.Geometry;
-using PathGeometry = SharpDX.Direct2D1.PathGeometry;
+using Avalonia.Direct2D1.Interop.Direct2D1;
+using Geometry = Avalonia.Direct2D1.Interop.Direct2D1.Geometry;
+using PathGeometry = Avalonia.Direct2D1.Interop.Direct2D1.PathGeometry;
 
 namespace Avalonia.Direct2D1.Media
 {
@@ -67,7 +67,7 @@ namespace Avalonia.Direct2D1.Media
         /// <inheritdoc/>
         public bool FillContains(Point point)
         {
-            return Geometry.FillContainsPoint(point.ToSharpDX());
+            return Geometry.FillContainsPoint(point.ToInterop());
         }
 
         /// <inheritdoc/>
@@ -85,7 +85,7 @@ namespace Avalonia.Direct2D1.Media
         /// <inheritdoc/>
         public bool StrokeContains(Avalonia.Media.IPen? pen, Point point)
         {
-            return Geometry.StrokeContainsPoint(point.ToSharpDX(), (float)(pen?.Thickness ?? 0));
+            return Geometry.StrokeContainsPoint(point.ToInterop(), (float)(pen?.Thickness ?? 0));
         }
 
         public ITransformedGeometryImpl WithTransform(Matrix transform)
@@ -101,8 +101,8 @@ namespace Avalonia.Direct2D1.Media
         /// <inheritdoc />
         public bool TryGetPointAtDistance(double distance, out Point point)
         {
-            Geometry.ComputePointAtLength((float)distance, ContourApproximation, out var tangentVector);
-            point = new Point(tangentVector.X, tangentVector.Y);
+            Geometry.ComputePointAtLength((float)distance, null, ContourApproximation, out var nativePoint);
+            point = new Point(nativePoint.X, nativePoint.Y);
             return true;
         }
         

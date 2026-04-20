@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using Avalonia.Platform;
-using SharpDX;
-using SharpDX.Direct2D1;
-using SharpDX.Mathematics.Interop;
+using Avalonia.Direct2D1.Interop;
+using Avalonia.Direct2D1.Interop.Direct2D1;
+using Avalonia.Direct2D1.Interop.Mathematics;
 
 namespace Avalonia.Direct2D1
 {
@@ -42,17 +42,17 @@ namespace Avalonia.Direct2D1
 
         public static Vector ToAvaloniaVector(this Size2F p) => new Vector(p.Width, p.Height);
 
-        public static RawRectangleF ToSharpDX(this Rect r)
+        public static RawRectangleF ToInterop(this Rect r)
         {
             return new RawRectangleF((float)r.X, (float)r.Y, (float)r.Right, (float)r.Bottom);
         }
 
-        public static RawVector2 ToSharpDX(this Point p)
+        public static RawVector2 ToInterop(this Point p)
         {
             return new RawVector2 { X = (float)p.X, Y = (float)p.Y };
         }
 
-        public static Size2F ToSharpDX(this Size p)
+        public static Size2F ToInterop(this Size p)
         {
             return new Size2F((float)p.Width, (float)p.Height);
         }
@@ -67,7 +67,7 @@ namespace Avalonia.Direct2D1
                 return ExtendMode.Wrap;
         }
 
-        public static SharpDX.Direct2D1.LineJoin ToDirect2D(this Avalonia.Media.PenLineJoin lineJoin)
+        public static Avalonia.Direct2D1.Interop.Direct2D1.LineJoin ToDirect2D(this Avalonia.Media.PenLineJoin lineJoin)
         {
             if (lineJoin == Avalonia.Media.PenLineJoin.Round)
                 return LineJoin.Round;
@@ -77,7 +77,7 @@ namespace Avalonia.Direct2D1
                 return LineJoin.Bevel;
         }
         
-        public static SharpDX.Direct2D1.CapStyle ToDirect2D(this Avalonia.Media.PenLineCap lineCap)
+        public static Avalonia.Direct2D1.Interop.Direct2D1.CapStyle ToDirect2D(this Avalonia.Media.PenLineCap lineCap)
         {
             if (lineCap == Avalonia.Media.PenLineCap.Flat)
                 return CapStyle.Flat;
@@ -94,11 +94,11 @@ namespace Avalonia.Direct2D1
             bool isPremul = alphaFormat == AlphaFormat.Premul;
 
             if (format == Platform.PixelFormat.Rgb565)
-                return SharpDX.WIC.PixelFormat.Format16bppBGR565;
+                return Avalonia.Direct2D1.Interop.WIC.PixelFormat.Format16bppBGR565;
             if (format == Platform.PixelFormat.Bgra8888)
-                return isPremul ? SharpDX.WIC.PixelFormat.Format32bppPBGRA : SharpDX.WIC.PixelFormat.Format32bppBGRA;
+                return isPremul ? Avalonia.Direct2D1.Interop.WIC.PixelFormat.Format32bppPBGRA : Avalonia.Direct2D1.Interop.WIC.PixelFormat.Format32bppBGRA;
             if (format == Platform.PixelFormat.Rgba8888)
-                return isPremul ? SharpDX.WIC.PixelFormat.Format32bppPRGBA : SharpDX.WIC.PixelFormat.Format32bppRGBA;
+                return isPremul ? Avalonia.Direct2D1.Interop.WIC.PixelFormat.Format32bppPRGBA : Avalonia.Direct2D1.Interop.WIC.PixelFormat.Format32bppRGBA;
             throw new ArgumentException("Unknown pixel format");
         }
 
@@ -108,7 +108,7 @@ namespace Avalonia.Direct2D1
         /// <param name="pen">The pen to convert.</param>
         /// <param name="renderTarget">The render target.</param>
         /// <returns>The Direct2D brush.</returns>
-        public static StrokeStyle ToDirect2DStrokeStyle(this Avalonia.Media.IPen pen, SharpDX.Direct2D1.RenderTarget renderTarget)
+        public static StrokeStyle ToDirect2DStrokeStyle(this Avalonia.Media.IPen pen, Avalonia.Direct2D1.Interop.Direct2D1.RenderTarget renderTarget)
         {
             return pen.ToDirect2DStrokeStyle(Direct2D1Platform.Direct2D1Factory);
         }

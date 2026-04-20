@@ -1,6 +1,6 @@
 using Avalonia.Media;
 using Avalonia.Utilities;
-using SharpDX.Direct2D1;
+using Avalonia.Direct2D1.Interop.Direct2D1;
 
 namespace Avalonia.Direct2D1.Media
 {
@@ -10,7 +10,7 @@ namespace Avalonia.Direct2D1.Media
 
         public ImageBrushImpl(
             ITileBrush brush,
-            SharpDX.Direct2D1.RenderTarget target,
+            Avalonia.Direct2D1.Interop.Direct2D1.RenderTarget target,
             BitmapImpl bitmap,
             Rect destinationRect)
         {
@@ -96,14 +96,14 @@ namespace Avalonia.Direct2D1.Media
         }
 
         private BitmapRenderTarget RenderIntermediate(
-            SharpDX.Direct2D1.RenderTarget target,
+            Avalonia.Direct2D1.Interop.Direct2D1.RenderTarget target,
             BitmapImpl bitmap,
             Direct2D1TileBrushCalculator calc)
         {
             var result = new BitmapRenderTarget(
                 target,
                 CompatibleRenderTargetOptions.None,
-                calc.IntermediateSize.ToSharpDX());
+                calc.IntermediateSize.ToInterop());
 
             using (var context = new RenderTarget(result).CreateDrawingContext(true))
             {

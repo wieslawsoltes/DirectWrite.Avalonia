@@ -1,4 +1,4 @@
-using SharpDX.Direct2D1;
+using Avalonia.Direct2D1.Interop.Direct2D1;
 
 namespace Avalonia.Direct2D1.Media
 {

@@ -2,9 +2,9 @@
 using Avalonia.Direct2D1.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Rendering;
-using SharpDX;
-using SharpDX.Direct2D1;
-using SharpDX.DXGI;
+using Avalonia.Direct2D1.Interop;
+using Avalonia.Direct2D1.Interop.Direct2D1;
+using Avalonia.Direct2D1.Interop.DXGI;
 
 namespace Avalonia.Direct2D1
 {   
@@ -96,7 +96,7 @@ namespace Avalonia.Direct2D1
             };
 
             using (var dxgiAdapter = Direct2D1Platform.DxgiDevice.Adapter)
-            using (var dxgiFactory = dxgiAdapter.GetParent<SharpDX.DXGI.Factory2>())
+            using (var dxgiFactory = dxgiAdapter.GetParent<Avalonia.Direct2D1.Interop.DXGI.Factory2>())
             {
                 _swapChain = CreateSwapChain(dxgiFactory, swapChainDescription);
             }
@@ -116,9 +116,9 @@ namespace Avalonia.Direct2D1
                 _deviceContext,
                 dxgiBackBuffer,
                 new BitmapProperties1(
-                    new SharpDX.Direct2D1.PixelFormat
+                    new Avalonia.Direct2D1.Interop.Direct2D1.PixelFormat
                     {
-                        AlphaMode = SharpDX.Direct2D1.AlphaMode.Premultiplied,
+                        AlphaMode = Avalonia.Direct2D1.Interop.Direct2D1.AlphaMode.Premultiplied,
                         Format = Format.B8G8R8A8_UNorm
                     },
                     _savedSize.Width,
@@ -129,7 +129,7 @@ namespace Avalonia.Direct2D1
             }
         }
 
-        protected abstract SwapChain1 CreateSwapChain(SharpDX.DXGI.Factory2 dxgiFactory, SwapChainDescription1 swapChainDesc);
+        protected abstract SwapChain1 CreateSwapChain(Avalonia.Direct2D1.Interop.DXGI.Factory2 dxgiFactory, SwapChainDescription1 swapChainDesc);
 
         protected abstract Size2F GetWindowDpi();
 

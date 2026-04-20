@@ -7,7 +7,7 @@ namespace Avalonia.Direct2D1.Media
     {
         public RadialGradientBrushImpl(
             IRadialGradientBrush brush,
-            SharpDX.Direct2D1.RenderTarget target,
+            Avalonia.Direct2D1.Interop.Direct2D1.RenderTarget target,
             Rect destinationRect)
         {
             if (brush.GradientStops.Count == 0)
@@ -15,7 +15,7 @@ namespace Avalonia.Direct2D1.Media
                 return;
             }
 
-            var gradientStops = brush.GradientStops.Select(s => new SharpDX.Direct2D1.GradientStop
+            var gradientStops = brush.GradientStops.Select(s => new Avalonia.Direct2D1.Interop.Direct2D1.GradientStop
             {
                 Color = s.Color.ToDirect2D(),
                 Position = (float)s.Offset
@@ -27,21 +27,21 @@ namespace Avalonia.Direct2D1.Media
             var radiusX = brush.RadiusX.ToValue(destinationRect.Width);
             var radiusY = brush.RadiusY.ToValue(destinationRect.Height);
 
-            using (var stops = new SharpDX.Direct2D1.GradientStopCollection(
+            using (var stops = new Avalonia.Direct2D1.Interop.Direct2D1.GradientStopCollection(
                 target,
                 gradientStops,
                 brush.SpreadMethod.ToDirect2D()))
             {
-                PlatformBrush = new SharpDX.Direct2D1.RadialGradientBrush(
+                PlatformBrush = new Avalonia.Direct2D1.Interop.Direct2D1.RadialGradientBrush(
                     target,
-                    new SharpDX.Direct2D1.RadialGradientBrushProperties
+                    new Avalonia.Direct2D1.Interop.Direct2D1.RadialGradientBrushProperties
                     {
-                        Center = centerPoint.ToSharpDX(),
-                        GradientOriginOffset = gradientOrigin.ToSharpDX(),
+                        Center = centerPoint.ToInterop(),
+                        GradientOriginOffset = gradientOrigin.ToInterop(),
                         RadiusX = (float)radiusX,
                         RadiusY = (float)radiusY
                     },
-                    new SharpDX.Direct2D1.BrushProperties
+                    new Avalonia.Direct2D1.Interop.Direct2D1.BrushProperties
                     {
                         Opacity = (float)brush.Opacity,
                         Transform = PrimitiveExtensions.Matrix3x2Identity,
