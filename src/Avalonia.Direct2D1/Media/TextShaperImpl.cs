@@ -130,7 +130,7 @@ namespace Avalonia.Direct2D1.Media
                         run.NumberSubstitution,
                         features?.Features,
                         features?.FeatureRangeLengths,
-                        features?.FeatureRanges ?? 0,
+                        maxGlyphCount,
                         clusterMap,
                         textProps,
                         glyphIndices,
@@ -222,7 +222,7 @@ namespace Avalonia.Direct2D1.Media
                 features[i] = new DWriteFontFeature(ToDirectWriteTag(feature.Tag), feature.Value);
             }
 
-            return new FeatureRange(new[] { features }, new[] { textLength }, 1);
+            return new FeatureRange(new[] { features }, new[] { textLength });
         }
 
         private static DWriteFontFeatureTag ToDirectWriteTag(string tag)
@@ -399,8 +399,7 @@ namespace Avalonia.Direct2D1.Media
 
         private readonly record struct FeatureRange(
             DWriteFontFeature[][] Features,
-            int[] FeatureRangeLengths,
-            int FeatureRanges);
+            int[] FeatureRangeLengths);
 
         private readonly record struct RunShapeResult(
             int GlyphCount,
