@@ -102,8 +102,7 @@ namespace Avalonia.Direct2D1
             Direct2D1Options options,
             Avalonia.Direct2D1.Interop.Direct3D.FeatureLevel[] featureLevels)
         {
-            var flags = Avalonia.Direct2D1.Interop.Direct3D11.DeviceCreationFlags.BgraSupport |
-                        Avalonia.Direct2D1.Interop.Direct3D11.DeviceCreationFlags.VideoSupport;
+            var flags = Avalonia.Direct2D1.Interop.Direct3D11.DeviceCreationFlags.BgraSupport;
 
             if (options.EnableDiagnostics)
             {
@@ -196,7 +195,6 @@ namespace Avalonia.Direct2D1
             AvaloniaLocator.CurrentMutable
                 .Bind<IFontManagerImpl>().ToConstant(new FontManagerImpl())
                 .Bind<ITextShaperImpl>().ToConstant(new TextShaperImpl());
-            Avalonia.Direct2D1.Interop.Configuration.EnableReleaseOnFinalizer = true;
         }
 
         public static void Initialize()
