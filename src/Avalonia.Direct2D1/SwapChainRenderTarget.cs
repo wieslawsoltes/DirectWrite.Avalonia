@@ -1,4 +1,6 @@
-﻿using Avalonia.Direct2D1.Media;
+﻿using System;
+using System.Runtime.InteropServices;
+using Avalonia.Direct2D1.Media;
 using Avalonia.Direct2D1.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Rendering;
@@ -10,6 +12,8 @@ namespace Avalonia.Direct2D1
 {   
     internal abstract class SwapChainRenderTarget : IRenderTarget, ILayerFactory
     {
+        private const int BackBufferCount = 2;
+        private const uint DxgiErrorInvalidCall = 0x887A0001;
         private Size2 _savedSize;
         private Size2F _savedDpi;
         private DeviceContext? _deviceContext;
@@ -28,15 +32,21 @@ namespace Avalonia.Direct2D1
 
         public IDrawingContextImpl CreateDrawingContext(bool useScaledDrawing)
         {
-            var size = GetWindowSize();
+            var size = NormalizeSize(GetWindowSize());
             var dpi = GetWindowDpi();
+            var sizeChanged = size != _savedSize;
+            var dpiChanged = dpi != _savedDpi;
 
-            if (size != _savedSize || dpi != _savedDpi)
+            if (sizeChanged || dpiChanged)
             {
                 _savedSize = size;
                 _savedDpi = dpi;
 
-                Resize();
+                Resize(sizeChanged);
+            }
+            else if (_deviceContext == null)
+            {
+                CreateDeviceContext();
             }
 
             return new DrawingContextImpl(this, _deviceContext!, useScaledDrawing, _swapChain);
@@ -69,11 +79,28 @@ namespace Avalonia.Direct2D1
             _swapChain = null;
         }
 
-        private void Resize()
+        private void Resize(bool sizeChanged)
         {
             DisposeDeviceContext();
 
-            _swapChain?.ResizeBuffers(0, 0, 0, Format.Unknown, SwapChainFlags.None);
+            if (sizeChanged && _swapChain is not null)
+            {
+                try
+                {
+                    _swapChain.ResizeBuffers(
+                        BackBufferCount,
+                        _savedSize.Width,
+                        _savedSize.Height,
+                        Format.B8G8R8A8_UNorm,
+                        SwapChainFlags.None);
+                }
+                catch (COMException ex) when ((uint)ex.HResult == DxgiErrorInvalidCall)
+                {
+                    // DXGI still sees a live back-buffer reference somewhere; recreate the swap chain instead.
+                    _swapChain.Dispose();
+                    _swapChain = null;
+                }
+            }
 
             CreateDeviceContext();
         }
@@ -91,7 +118,7 @@ namespace Avalonia.Direct2D1
                     Quality = 0,
                 },
                 Usage = Usage.RenderTargetOutput,
-                BufferCount = 2,
+                BufferCount = BackBufferCount,
                 Scaling = Scaling.Stretch,
                 SwapEffect = SwapEffect.FlipDiscard,
                 AlphaMode = Avalonia.Direct2D1.Interop.DXGI.AlphaMode.Ignore,
@@ -149,6 +176,13 @@ namespace Avalonia.Direct2D1
 
             _deviceContext?.Dispose();
             _deviceContext = null;
+        }
+
+        private static Size2 NormalizeSize(Size2 size)
+        {
+            return new Size2(
+                Math.Max(size.Width, 1),
+                Math.Max(size.Height, 1));
         }
 
         protected abstract SwapChain1 CreateSwapChain(Avalonia.Direct2D1.Interop.DXGI.Factory2 dxgiFactory, SwapChainDescription1 swapChainDesc);
