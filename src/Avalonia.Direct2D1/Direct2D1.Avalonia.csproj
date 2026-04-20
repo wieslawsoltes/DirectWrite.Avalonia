@@ -1,8 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>Direct2D1.Avalonia</AssemblyName>
     <IsPackable>true</IsPackable>
     <PackageId>Direct2D1.Avalonia</PackageId>
+    <RootNamespace>Avalonia.Direct2D1</RootNamespace>
     <Title>Direct2D1.Avalonia</Title>
     <Description>Standalone Direct2D1 and DirectWrite rendering backend for Avalonia on Windows.</Description>
     <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>

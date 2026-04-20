@@ -190,8 +190,8 @@ When changing shaping code, add or update tests in:
 
 For renderer changes, run as many of these as are relevant:
 
-- `dotnet build /Users/wieslawsoltes/GitHub/DirectWrite.Avalonia/src/Avalonia.Direct2D1/Avalonia.Direct2D1.csproj -c Debug --no-restore`
-- `dotnet build /Users/wieslawsoltes/GitHub/DirectWrite.Avalonia/src/Avalonia.Direct2D1.Win32/Avalonia.Direct2D1.Win32.csproj -c Debug --no-restore`
+- `dotnet build /Users/wieslawsoltes/GitHub/DirectWrite.Avalonia/src/Avalonia.Direct2D1/Direct2D1.Avalonia.csproj -c Debug --no-restore`
+- `dotnet build /Users/wieslawsoltes/GitHub/DirectWrite.Avalonia/src/Avalonia.Direct2D1.Win32/Direct2D1.Avalonia.Win32.csproj -c Debug --no-restore`
 - `dotnet build /Users/wieslawsoltes/GitHub/DirectWrite.Avalonia/samples/ControlCatalog.Direct2D1/ControlCatalog.Direct2D1.csproj -c Debug --no-restore`
 - `dotnet test /Users/wieslawsoltes/GitHub/DirectWrite.Avalonia/tests/Avalonia.Direct2D1.UnitTests/Avalonia.Direct2D1.UnitTests.csproj -c Debug --no-build`
 - `dotnet test /Users/wieslawsoltes/GitHub/DirectWrite.Avalonia/tests/Avalonia.Direct2D1.RenderTests/Avalonia.Direct2D1.RenderTests.csproj -c Debug --no-build`
@@ -228,4 +228,3 @@ Highest value next steps:
 - complete composition-backed Win32 surface modes
 - improve render regression coverage with true Direct2D1 goldens generated on Windows
 - reduce remaining interop adaptation complexity where official generated projections can replace custom glue cleanly
-

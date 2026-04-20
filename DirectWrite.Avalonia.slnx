@@ -7,7 +7,7 @@
     <Project Path="samples/ControlCatalog.Direct2D1/ControlCatalog.Direct2D1.csproj" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src/Avalonia.Direct2D1.Win32/Avalonia.Direct2D1.Win32.csproj" />
-    <Project Path="src/Avalonia.Direct2D1/Avalonia.Direct2D1.csproj" />
+    <Project Path="src/Avalonia.Direct2D1.Win32/Direct2D1.Avalonia.Win32.csproj" />
+    <Project Path="src/Avalonia.Direct2D1/Direct2D1.Avalonia.csproj" />
   </Folder>
 </Solution>
