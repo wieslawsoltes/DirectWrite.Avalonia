@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Direct2D1.Win32;
+using Avalonia.Themes.Fluent;
 
 namespace ControlCatalog.Direct2D1;
 
@@ -17,6 +18,11 @@ internal static class Program
 
 public sealed class App : Application
 {
+    public override void Initialize()
+    {
+        Styles.Add(new FluentTheme());
+    }
+
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

@@ -70,6 +70,7 @@ namespace Avalonia.Direct2D1.Media
             }
             
             _deviceContext.BeginDraw();
+            ApplyRenderOptions(_renderOptions);
         }
 
         /// <summary>
@@ -742,6 +743,7 @@ namespace Avalonia.Direct2D1.Media
         public void PushTextOptions(TextOptions textOptions)
         {
             _textOptionsStack.Push(textOptions);
+            ApplyRenderOptions(_renderOptions);
         }
 
         public void PopTextOptions()
@@ -750,6 +752,8 @@ namespace Avalonia.Direct2D1.Media
             {
                 _textOptionsStack.Pop();
             }
+
+            ApplyRenderOptions(_renderOptions);
         }
 
         public object? GetFeature(Type t) => null;
@@ -775,8 +779,10 @@ namespace Avalonia.Direct2D1.Media
             switch (textRenderingMode)
             {
                 case TextRenderingMode.Unspecified:
+                    // This backend renders text onto alpha-backed DXGI/WIC targets, where grayscale is the
+                    // safe default and avoids ClearType disappearing on composition surfaces.
                     _deviceContext.TextAntialiasMode = enableTextAntialiasing && renderOptions.EdgeMode != EdgeMode.Aliased
-                        ? TextAntialiasMode.Default
+                        ? TextAntialiasMode.Grayscale
                         : TextAntialiasMode.Aliased;
                     break;
                 case TextRenderingMode.Alias:
