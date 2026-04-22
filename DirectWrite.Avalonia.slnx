@@ -9,5 +9,6 @@
   <Folder Name="/src/">
     <Project Path="src/Avalonia.Direct2D1.Win32/Direct2D1.Avalonia.Win32.csproj" />
     <Project Path="src/Avalonia.Direct2D1/Direct2D1.Avalonia.csproj" />
+    <Project Path="src/Win32.Avalonia/Win32.Avalonia.csproj" />
   </Folder>
 </Solution>

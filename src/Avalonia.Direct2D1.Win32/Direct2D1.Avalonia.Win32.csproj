@@ -10,10 +10,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Avalonia.Direct2D1\Direct2D1.Avalonia.csproj" />
+    <ProjectReference Include="..\Win32.Avalonia\Win32.Avalonia.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" />
-    <PackageReference Include="Avalonia.Win32" />
   </ItemGroup>
 </Project>
