@@ -5,6 +5,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Avalonia.Direct2D1\Direct2D1.Avalonia.csproj" />
+    <ProjectReference Include="..\..\src\Win32.Avalonia\Win32.Avalonia.csproj" />
   </ItemGroup>
 
   <ItemGroup>

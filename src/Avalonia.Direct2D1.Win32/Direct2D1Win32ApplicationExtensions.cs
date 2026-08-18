@@ -1,4 +1,4 @@
-using Avalonia.Win32;
+using Win32.Avalonia;
 
 namespace Avalonia.Direct2D1.Win32;
 
@@ -10,8 +10,7 @@ public static class Direct2D1Win32ApplicationExtensions
 
         return builder
             .With(options.Direct2D1)
-            .With(options.ToAvaloniaOptions())
-            .UseWin32()
+            .UseWin32Avalonia(options.ToWin32AvaloniaOptions())
             .UseDirect2D1();
     }
 }
